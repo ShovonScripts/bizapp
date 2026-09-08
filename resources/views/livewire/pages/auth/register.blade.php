@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Business;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Livewire\Attributes\Layout;
@@ -10,6 +12,7 @@ use Livewire\Volt\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
+    public string $business_name = '';
     public string $name = '';
     public string $email = '';
     public string $password = '';
@@ -17,18 +20,51 @@ new #[Layout('layouts.guest')] class extends Component
 
     /**
      * Handle an incoming registration request.
+     *
+     * ⚠️ SECURITY — WHY THIS IS NOT THE STOCK BREEZE VERSION.
+     *
+     * Breeze ships `User::create($validated)` with no business_id. In this app
+     * business_id = null means SUPER-ADMIN — a user who bypasses every tenant
+     * scope and can read every client's customer records. Left as-is, anyone who
+     * found /register on the live site would get exactly that. Under UK GDPR
+     * that is a reportable personal-data breach, not merely a bug.
+     *
+     * So registration always creates a Business first and attaches the user to
+     * it as 'owner'. There is no code path here that produces a super-admin;
+     * those are made deliberately in tinker.
      */
     public function register(): void
     {
         $validated = $this->validate([
+            'business_name' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
+        // One transaction: a user without a business, or a business without an
+        // owner, are both broken states. Better to create neither than one.
+        $user = DB::transaction(function () use ($validated) {
+            $business = Business::create([
+                'name' => $validated['business_name'],
+                'slug' => Business::uniqueSlug($validated['business_name']),
+                'niche' => 'salon',
+                'timezone' => 'Europe/London',
+                'currency' => 'GBP',
+                'subscription_status' => 'trialing',
+                'trial_ends_at' => now()->addDays(14),
+            ]);
 
-        event(new Registered($user = User::create($validated)));
+            return User::create([
+                'business_id' => $business->id,
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'owner',
+            ]);
+        });
+
+        event(new Registered($user));
 
         Auth::login($user);
 
@@ -38,10 +74,17 @@ new #[Layout('layouts.guest')] class extends Component
 
 <div>
     <form wire:submit="register">
-        <!-- Name -->
+        <!-- Business Name -->
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input wire:model="name" id="name" class="block mt-1 w-full" type="text" name="name" required autofocus autocomplete="name" />
+            <x-input-label for="business_name" :value="__('Business name')" />
+            <x-text-input wire:model="business_name" id="business_name" class="block mt-1 w-full" type="text" name="business_name" required autofocus autocomplete="organization" />
+            <x-input-error :messages="$errors->get('business_name')" class="mt-2" />
+        </div>
+
+        <!-- Name -->
+        <div class="mt-4">
+            <x-input-label for="name" :value="__('Your name')" />
+            <x-text-input wire:model="name" id="name" class="block mt-1 w-full" type="text" name="name" required autocomplete="name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class Business extends Model
 {
@@ -36,6 +37,26 @@ class Business extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class);
+    }
+
+    public function staffMembers(): HasMany
+    {
+        return $this->hasMany(StaffMember::class);
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
     }
 
     /* -----------------------------------------------------------------
@@ -96,5 +117,26 @@ class Business extends Model
     public function onTrial(): bool
     {
         return $this->trial_ends_at !== null && $this->trial_ends_at->isFuture();
+    }
+
+    /**
+     * Build a slug that is not already taken.
+     *
+     * Slugs are unique at the DB level, so without this a second "Hair Studio"
+     * signing up would hit a raw SQL integrity error on the registration form.
+     * Includes soft-deleted rows on purpose — the unique index does not care
+     * that a row is soft-deleted.
+     */
+    public static function uniqueSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: 'business';
+        $slug = $base;
+        $i = 2;
+
+        while (static::withTrashed()->where('slug', $slug)->exists()) {
+            $slug = $base.'-'.$i++;
+        }
+
+        return $slug;
     }
 }
