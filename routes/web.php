@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Livewire\Volt\Volt;
 
 Route::view('/', 'welcome');
 
@@ -11,6 +12,21 @@ Route::view('dashboard', 'dashboard')
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
+
+/*
+|--------------------------------------------------------------------------
+| Tenant screens
+|
+| Every route here must stay behind 'auth'. Tenant::id() reads the logged-in
+| user, so an unauthenticated request would resolve to null — which the
+| BelongsToBusiness scope treats as "unscoped" and would expose every
+| client's data. Never expose a tenant-scoped page to a guest.
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Volt::route('customers', 'customers.index')->name('customers.index');
+});
 
 require __DIR__.'/auth.php';
 

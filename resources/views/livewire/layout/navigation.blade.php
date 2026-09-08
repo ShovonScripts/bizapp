@@ -33,6 +33,14 @@ new class extends Component
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    {{-- Hidden from super-admins: they have no business_id, so the
+                         tenant screens abort 403 rather than show every client at once. --}}
+                    @unless (auth()->user()->isSuperAdmin())
+                        <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')" wire:navigate>
+                            {{ __('Customers') }}
+                        </x-nav-link>
+                    @endunless
                 </div>
             </div>
 
@@ -84,6 +92,12 @@ new class extends Component
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @unless (auth()->user()->isSuperAdmin())
+                <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')" wire:navigate>
+                    {{ __('Customers') }}
+                </x-responsive-nav-link>
+            @endunless
         </div>
 
         <!-- Responsive Settings Options -->
