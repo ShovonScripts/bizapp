@@ -109,6 +109,106 @@ class Customer extends Model
     /* ------------------------------- Consent ----------------------------- */
 
     /**
+     * Is there anywhere to actually send a message?
+     *
+     * A separate question from consent: someone can be perfectly willing to hear
+     * from us and still be unreachable because nobody took their number, or
+     * because they never started the Telegram bot. Both have to be true before a
+     * reminder can be counted as one that will arrive — and the dashboard must not
+     * promise "5 reminders tomorrow" when two of them have nowhere to go.
+     *
+     * Deliberately channel-aware rather than "has a phone": a telegram-preferring
+     * customer with a mobile number is still unreachable until they link.
+     */
+    public function hasContactRoute(): bool
+    {
+        return match ($this->preferred_channel) {
+            'telegram' => $this->telegramLinked(),
+            'whatsapp' => filled($this->whatsappTarget()),
+            'sms' => filled($this->phone),
+            'email' => filled($this->email),
+            // 'none', plus any channel added to the column but not yet taught here.
+            default => false,
+        };
+    }
+
+    /**
+     * The SQL half of hasContactRoute(), so a count does not have to load every
+     * row into PHP. CustomerTest asserts the two agree — they will drift otherwise,
+     * and a dashboard number that disagrees with what actually sends is worse than
+     * no number at all.
+     */
+    public function scopeWithContactRoute(Builder $query): Builder
+    {
+        return $query->where(function (Builder $outer) {
+            $outer
+                ->where(fn (Builder $q) => $q->where('preferred_channel', 'telegram')
+                    ->whereNotNull('telegram_chat_id'))
+                ->orWhere(fn (Builder $q) => $q->where('preferred_channel', 'whatsapp')
+                    ->where(fn (Builder $w) => $w->whereNotNull('whatsapp_number')->orWhereNotNull('phone')))
+                ->orWhere(fn (Builder $q) => $q->where('preferred_channel', 'sms')
+                    ->whereNotNull('phone'))
+                ->orWhere(fn (Builder $q) => $q->where('preferred_channel', 'email')
+                    ->whereNotNull('email'));
+        });
+    }
+
+    /**
+     * Why can't we message this customer? Null means we can.
+     *
+     * Exists so the reason is written once and shown identically wherever it
+     * matters — the dashboard's "needs a phone call" list today, and the reminder
+     * engine's skip log tomorrow. Two separate wordings of the same fact would
+     * eventually disagree, and "why didn't my customer get their reminder" is a
+     * question the owner will ask us at some point.
+     *
+     * Order matters. Unsubscribed comes first because it is the one reason we must
+     * not work around: everything below it is a gap to fill in, that one is a
+     * decision the customer made.
+     */
+    public function unreachableReason(): ?string
+    {
+        if ($this->unsubscribed_at !== null) {
+            return 'asked us to stop';
+        }
+
+        if ($this->preferred_channel === 'none') {
+            return 'reminders turned off';
+        }
+
+        if (! $this->hasContactRoute()) {
+            return match ($this->preferred_channel) {
+                'telegram' => 'Telegram not linked yet',
+                'whatsapp' => 'no WhatsApp number',
+                'sms' => 'no mobile number',
+                'email' => 'no email address',
+                default => 'no way to reach them',
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * The same answer as a finished sentence.
+     *
+     * unreachableReason() returns a fragment because the dashboard prints it
+     * inline ("Sarah Khan — Telegram not linked yet"). The messaging layer needs
+     * it standing alone in scheduled_messages.error, where a lowercase fragment
+     * with no full stop reads like truncated output.
+     *
+     * Both forms live here so they cannot drift. Two call sites doing their own
+     * ucfirst() is exactly how the dashboard's count and its explanation once
+     * ended up disagreeing.
+     */
+    public function unreachableSentence(): ?string
+    {
+        $reason = $this->unreachableReason();
+
+        return $reason === null ? null : ucfirst($reason).'.';
+    }
+
+    /**
      * Transactional = "your appointment is tomorrow". Lawful basis is contract /
      * legitimate interest, so consent is NOT required — but an explicit
      * unsubscribe still wins, because ignoring it is how you get complaints.
@@ -144,6 +244,33 @@ class Customer extends Model
         $this->forceFill([
             'marketing_consent' => false,
             'unsubscribed_at' => now(),
+        ])->save();
+    }
+
+    /* ---------------------------- Visit rollup --------------------------- */
+
+    /**
+     * Rebuild last_visit_at and total_spend from the appointments table.
+     *
+     * Recomputed, never incremented. An increment/decrement pair drifts the first
+     * time a status is changed twice, a booking is edited, or an appointment is
+     * deleted — and once total_spend is wrong it stays wrong, quietly changing who
+     * counts as a lapsed customer and what the earnings figure says. Two cheap
+     * aggregates buy certainty.
+     *
+     * Only COMPLETED counts: a cancellation or a no-show is not a visit, and
+     * nobody paid for it. Soft-deleted appointments are excluded by the model's
+     * own scope, which is correct — a removed booking never happened.
+     */
+    public function recomputeVisitStats(): void
+    {
+        // A fresh relation per aggregate on purpose: clone() on a Relation is a
+        // shallow copy, so both calls would share — and mutate — one query builder.
+        $completed = fn () => $this->appointments()->where('status', Appointment::COMPLETED);
+
+        $this->forceFill([
+            'last_visit_at' => $completed()->max('starts_at'),
+            'total_spend' => $completed()->sum('price'),
         ])->save();
     }
 

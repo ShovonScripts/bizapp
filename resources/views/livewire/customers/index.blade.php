@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\TenantScreen;
+use App\Models\Business;
 use App\Models\Customer;
 use App\Support\Phone;
 use App\Support\Tenant;
@@ -12,6 +14,7 @@ use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 {
+    use TenantScreen;
     use WithPagination;
 
     public const CHANNELS = ['whatsapp', 'telegram', 'email', 'sms', 'none'];
@@ -24,6 +27,14 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
     public bool $showForm = false;
     public ?int $editingId = null;
+
+    /* The Telegram invite panel. Held as plain strings rather than looked up in the
+       template, because building the link writes a token to the database and a
+       render must never have side effects — Livewire re-renders on every keystroke
+       in the search box. */
+    public ?int $linkingId = null;
+    public string $linkUrl = '';
+    public string $linkMessage = '';
 
     /* Form fields. The optional ones are ?string defaulting to null, not '',
        because an empty string in `phone` breaks the (business_id, phone) unique
@@ -38,16 +49,12 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
     public ?string $notes = null;
 
     /**
-     * This screen only makes sense inside one business.
-     *
-     * A super-admin has business_id = null, which the global scope reads as
-     * "unscoped" — they would see every client's customers in one list and a new
-     * row would have no business to attach to. Until there is a proper business
-     * switcher, they are locked out rather than shown a broken page.
+     * This screen only makes sense inside one business — see TenantScreen for why
+     * the guard is called explicitly here instead of hooked in by the trait.
      */
     public function mount(): void
     {
-        abort_unless(Tenant::check(), 403, 'Select a business before managing customers.');
+        $this->guardTenant();
     }
 
     protected function rules(): array
@@ -169,7 +176,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
         $this->showForm = false;
         $this->resetForm();
 
-        $this->dispatch('toast', message: 'Customer saved.');
+        $this->toast('Customer saved.');
     }
 
     /**
@@ -244,7 +251,59 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
         // figures. GDPR erasure is a separate, deliberate action — not this button.
         Customer::findOrFail($id)->delete();
 
-        $this->dispatch('toast', message: 'Customer removed.');
+        $this->toast('Customer removed.');
+    }
+
+    /* ------------------------- Telegram invitations ---------------------- */
+
+    /**
+     * Produce this customer's personal invite link.
+     *
+     * ─── Why the owner sends it, rather than us ─────────────────────────────
+     * A Telegram bot cannot message anyone who has not messaged it first. There is
+     * no way around that, and no list we can buy our way onto — the customer has to
+     * tap /start themselves. The only person with an existing, trusted channel to
+     * them is the salon, so the salon forwards the link by WhatsApp or text.
+     *
+     * The token in it is the only thing identifying the customer to a webhook that
+     * arrives with no tenant and no session, so it is per-customer, single-use in
+     * practice (the first chat to use it keeps it), and generated here rather than
+     * seeded for everybody — a token that exists is a token that can leak.
+     */
+    public function telegramLink(int $id): void
+    {
+        // findOrFail against the scoped query is the authorisation check: another
+        // business's customer simply does not exist from here.
+        $customer = Customer::findOrFail($id);
+
+        $username = ltrim(trim((string) config('messaging.telegram.bot_username')), '@');
+
+        if ($username === '') {
+            // Developer-facing, and deliberately not silent: without this the link
+            // would be https://t.me/?start=… , which looks plausible and goes nowhere.
+            $this->toast('Telegram is not set up yet — add TELEGRAM_BOT_USERNAME to your .env.');
+
+            return;
+        }
+
+        $this->linkingId = $customer->id;
+        $this->linkUrl = 'https://t.me/'.$username.'?start='.$customer->ensureTelegramLinkToken();
+
+        // Written out in full so the owner can paste it straight into WhatsApp
+        // without composing anything. Plain text, no markdown: it is going into
+        // someone else's messaging app, not ours.
+        $this->linkMessage = "Hi {$customer->name}, tap this link to get your appointment "
+            ."reminders from ".$this->businessName()." on Telegram: {$this->linkUrl}";
+    }
+
+    public function closeLink(): void
+    {
+        $this->reset(['linkingId', 'linkUrl', 'linkMessage']);
+    }
+
+    protected function businessName(): string
+    {
+        return Business::find(Tenant::id())?->name ?? 'us';
     }
 
     public function resetForm(): void
@@ -295,10 +354,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
             <x-primary-button type="button" wire:click="create">Add customer</x-primary-button>
         </div>
 
-        <div x-show="toast" x-transition style="display: none" class="px-4 sm:px-0">
-            <div class="rounded-md bg-green-50 border border-green-200 px-4 py-2 text-sm text-green-800"
-                 x-text="toast"></div>
-        </div>
+        <x-toast />
 
         <div class="bg-white shadow-sm sm:rounded-lg">
 
@@ -383,6 +439,14 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                 </td>
 
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
+                                    @if (! $customer->telegramLinked() && $customer->preferred_channel !== 'none')
+                                        {{-- Hidden once they are linked, and for anyone who has
+                                             asked for no messages at all: sending them an invite
+                                             would be asking a question they already answered. --}}
+                                        <button type="button" wire:click="telegramLink({{ $customer->id }})"
+                                                class="me-3 font-medium text-sky-600 hover:text-sky-800">Invite</button>
+                                    @endif
+
                                     <button type="button" wire:click="edit({{ $customer->id }})"
                                             class="font-medium text-indigo-600 hover:text-indigo-900">Edit</button>
 
@@ -412,22 +476,9 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
         </div>
     </div>
 
-    {{-- Own modal rather than <x-modal>: Breeze's version keeps `show` in Alpine
-         state, and Livewire's DOM morphing never re-runs x-data — so a server-side
-         $showForm change would not reopen it. Wrapping in @if keeps one source of
-         truth, and Alpine inside a freshly inserted node initialises correctly. --}}
     @if ($showForm)
-        <div class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0"
-             x-on:keydown.escape.window="$wire.set('showForm', false)">
-
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="$set('showForm', false)"></div>
-
-            <form wire:submit="save"
-                  class="relative mx-auto mb-6 w-full sm:max-w-lg space-y-4 rounded-lg bg-white p-6 shadow-xl">
-
-                <h2 class="text-lg font-medium text-gray-900">
-                    {{ $editingId ? 'Edit customer' : 'Add customer' }}
-                </h2>
+        <x-form-modal :title="$editingId ? 'Edit customer' : 'Add customer'"
+                      :submit-label="$editingId ? 'Save changes' : 'Add customer'">
 
                 <div>
                     <x-input-label for="name" value="Name" />
@@ -488,12 +539,74 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                         </span>
                     </span>
                 </label>
+        </x-form-modal>
+    @endif
 
-                <div class="flex justify-end gap-3 pt-2">
-                    <x-secondary-button type="button" wire:click="$set('showForm', false)">Cancel</x-secondary-button>
-                    <x-primary-button>{{ $editingId ? 'Save changes' : 'Add customer' }}</x-primary-button>
+    @if ($linkingId)
+        {{-- Not x-form-modal: there is nothing to submit here. The whole panel is a
+             clipboard, and the owner's next action happens in WhatsApp. --}}
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             wire:key="tg-invite-{{ $linkingId }}">
+
+            <div class="fixed inset-0 bg-gray-900/50" wire:click="closeLink"></div>
+
+            <div class="relative w-full max-w-lg rounded-lg bg-white shadow-xl"
+                 x-data="{ copied: null }"
+                 x-on:keydown.escape.window="$wire.closeLink()">
+
+                <div class="p-6 space-y-4">
+                    <div>
+                        <h2 class="text-lg font-medium text-gray-900">Invite to Telegram</h2>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Telegram won't let us message someone until they've started the bot
+                            themselves, so send them this link. It's personal to them — one link
+                            per customer.
+                        </p>
+                    </div>
+
+                    <div>
+                        <x-input-label value="Ready-made message" />
+                        <textarea readonly rows="3" x-ref="message"
+                                  class="mt-1 block w-full text-sm border-gray-300 bg-gray-50 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                  >{{ $linkMessage }}</textarea>
+
+                        <button type="button"
+                                x-on:click="$refs.message.select();
+                                            navigator.clipboard?.writeText($refs.message.value);
+                                            copied = 'message'; setTimeout(() => copied = null, 2000)"
+                                class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                            <span x-show="copied !== 'message'">Copy message</span>
+                            <span x-show="copied === 'message'" class="text-green-600">Copied</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <x-input-label value="Link only" />
+                        <input type="text" readonly x-ref="url" value="{{ $linkUrl }}"
+                               class="mt-1 block w-full text-sm border-gray-300 bg-gray-50 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+
+                        <button type="button"
+                                x-on:click="$refs.url.select();
+                                            navigator.clipboard?.writeText($refs.url.value);
+                                            copied = 'url'; setTimeout(() => copied = null, 2000)"
+                                class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                            <span x-show="copied !== 'url'">Copy link</span>
+                            <span x-show="copied === 'url'" class="text-green-600">Copied</span>
+                        </button>
+
+                        {{-- The clipboard API only exists on https and localhost, so the
+                             fields above are selectable and read-only rather than hidden:
+                             if the copy button does nothing, ctrl-C still works. --}}
+                        <p class="mt-2 text-xs text-gray-500">
+                            Nothing is sent from here — paste it into WhatsApp or a text message.
+                        </p>
+                    </div>
                 </div>
-            </form>
+
+                <div class="flex justify-end gap-3 rounded-b-lg bg-gray-50 px-6 py-4">
+                    <x-secondary-button type="button" wire:click="closeLink">Done</x-secondary-button>
+                </div>
+            </div>
         </div>
     @endif
 </div>

@@ -3,13 +3,24 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToBusiness;
+use App\Observers\AppointmentObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use InvalidArgumentException;
 
+/*
+ * The observer is attached here rather than in a service provider so that it is
+ * visible from the model itself. Anyone reading Appointment can see that saving
+ * one has consequences for queued reminders; a registration buried in
+ * AppServiceProvider is the kind of thing you only find after wondering for an
+ * hour why cancelling a booking cancelled a message.
+ */
+#[ObservedBy(AppointmentObserver::class)]
 class Appointment extends Model
 {
     use BelongsToBusiness;
@@ -29,6 +40,15 @@ class Appointment extends Model
 
     /** Statuses that block the slot in the calendar. */
     public const BLOCKING = [self::PENDING, self::CONFIRMED, self::COMPLETED];
+
+    /** Every legal value, for validation. A status outside this list is a bug, not input. */
+    public const STATUSES = [
+        self::PENDING,
+        self::CONFIRMED,
+        self::COMPLETED,
+        self::CANCELLED,
+        self::NO_SHOW,
+    ];
 
     protected $fillable = [
         'business_id',
@@ -141,6 +161,30 @@ class Appointment extends Model
     }
 
     /* ------------------------------ Helpers ------------------------------ */
+
+    /**
+     * Change the status and keep the customer's visit rollup honest.
+     *
+     * Every status change must come through here. `last_visit_at` and
+     * `total_spend` on the customer are derived from COMPLETED appointments, and
+     * they feed the lapsed-customer list and the earnings figures — so a bare
+     * `update(['status' => ...])` anywhere else silently desyncs the numbers the
+     * owner is paying us to get right. Reversal matters as much as completion:
+     * marking a booking completed and then cancelling it has to take the money
+     * back off.
+     */
+    public function changeStatus(string $status): void
+    {
+        if (! in_array($status, self::STATUSES, true)) {
+            throw new InvalidArgumentException("Unknown appointment status [{$status}].");
+        }
+
+        $this->update(['status' => $status]);
+
+        // Null only if the customer has been soft-deleted, in which case their
+        // stale figures are the least of anyone's worries.
+        $this->customer?->recomputeVisitStats();
+    }
 
     public function localStartsAt(): ?Carbon
     {

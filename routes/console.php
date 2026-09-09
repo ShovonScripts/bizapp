@@ -30,10 +30,32 @@ Schedule::command('app:heartbeat')
     ->withoutOverlapping();
 
 /*
-| Phase 5 onwards — commented out until those commands exist.
+| Reminders.
 |
-| Schedule::command('messages:plan')->everyFiveMinutes()->withoutOverlapping();
-| Schedule::command('messages:dispatch')->everyMinute()->withoutOverlapping();
+| Two commands rather than one because they fail differently. Planning reads the
+| database and is cheap; sending touches the network and is the part that hangs,
+| times out and gets rate limited. Splitting them means a slow provider delays
+| sending without also stopping tomorrow's reminders from being worked out.
+|
+| The planner runs every five minutes and looks twelve hours ahead, so nothing
+| depends on it running exactly on time — a missed run is picked up by the next
+| one, and the catch-up window covers an outage of a few hours.
+*/
+Schedule::command('messages:plan')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
+Schedule::command('messages:dispatch')
+    ->everyMinute()
+    // Runs the moment a message falls due rather than up to a minute later. The
+    // overlap guard matters more here than anywhere else: a batch of fifty slow
+    // HTTP calls can easily outlive its minute, and a second copy picking up the
+    // same rows would message every one of those customers twice.
+    ->withoutOverlapping();
+
+/*
+| Still to come — commented out until those commands exist.
+|
 | Schedule::command('invoices:mark-overdue')->dailyAt('01:00');
 | Schedule::command('customers:refresh-stats')->dailyAt('02:00');
 | Schedule::command('gdpr:purge-old-data')->weekly();

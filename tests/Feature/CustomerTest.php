@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Business;
 use App\Models\Customer;
+use App\Support\Tenant;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -18,7 +19,19 @@ class CustomerTest extends TestCase
     {
         parent::setUp();
 
+        /* Tenant is static state and PHPUnit shares one process, so a business left
+           set by an earlier test file would scope every query here to the wrong
+           business — and a test that counts rows would then quietly find none. */
+        Tenant::forget();
+
         $this->business = Business::factory()->create();
+    }
+
+    protected function tearDown(): void
+    {
+        Tenant::forget();
+
+        parent::tearDown();
     }
 
     protected function customer(array $attributes = []): Customer
@@ -220,6 +233,178 @@ class CustomerTest extends TestCase
 
         // Sanity check that the combinations were not all one answer.
         $this->assertCount(1, $marketableIds);
+    }
+
+    /* ================================================================
+     | Can we actually reach them?
+     |
+     | A separate question from consent, and the one the dashboard and the
+     | reminder engine both hang off. "5 reminders tomorrow" has to mean five
+     | messages that will arrive, or the owner finds out from the client.
+     * ================================================================ */
+
+    /**
+     * The trap this method exists for.
+     *
+     * A customer who prefers Telegram and has a perfectly good mobile number is
+     * still unreachable until they start the bot — Telegram will not let us message
+     * someone who hasn't. A "do they have a phone number?" check calls this person
+     * contactable, promises a reminder, and sends nothing.
+     */
+    public function test_a_telegram_customer_with_a_phone_but_no_chat_is_not_reachable(): void
+    {
+        $customer = $this->customer([
+            'preferred_channel' => 'telegram',
+            'phone' => '+447700900123',
+            'telegram_chat_id' => null,
+        ]);
+
+        $this->assertFalse($customer->hasContactRoute());
+        $this->assertSame('Telegram not linked yet', $customer->unreachableReason());
+
+        // Same person, same number, once they have started the bot.
+        $customer->update(['telegram_chat_id' => '600000001']);
+
+        $this->assertTrue($customer->fresh()->hasContactRoute());
+        $this->assertNull($customer->fresh()->unreachableReason());
+    }
+
+    public function test_a_whatsapp_customer_falls_back_to_their_main_number(): void
+    {
+        $onMainNumber = $this->customer([
+            'preferred_channel' => 'whatsapp',
+            'phone' => '+447700900201',
+            'whatsapp_number' => null,
+        ]);
+
+        $onSeparateNumber = $this->customer([
+            'preferred_channel' => 'whatsapp',
+            'phone' => null,
+            'whatsapp_number' => '+447700900202',
+        ]);
+
+        $this->assertTrue($onMainNumber->hasContactRoute());
+        $this->assertTrue($onSeparateNumber->hasContactRoute());
+    }
+
+    /**
+     * The reasons, in priority order.
+     *
+     * "Asked us to stop" has to win over everything below it, because everything
+     * below it is a gap for the owner to fill in and that one is a decision the
+     * customer made. Get the order wrong and the screen invites them to "fix" the
+     * details of someone who opted out.
+     */
+    public function test_unreachable_reason_names_the_thing_to_fix(): void
+    {
+        $optedOut = $this->customer([
+            'preferred_channel' => 'telegram',
+            'telegram_chat_id' => '600000002',
+            'unsubscribed_at' => now()->subDay(),
+        ]);
+
+        $this->assertSame('asked us to stop', $optedOut->unreachableReason());
+
+        $this->assertSame(
+            'reminders turned off',
+            $this->customer(['preferred_channel' => 'none'])->unreachableReason()
+        );
+
+        $this->assertSame(
+            'no mobile number',
+            $this->customer(['preferred_channel' => 'sms', 'phone' => null])->unreachableReason()
+        );
+
+        $this->assertSame(
+            'no email address',
+            $this->customer(['preferred_channel' => 'email', 'email' => null])->unreachableReason()
+        );
+
+        $this->assertNull(
+            $this->customer(['preferred_channel' => 'sms', 'phone' => '+447700900203'])->unreachableReason()
+        );
+    }
+
+    /**
+     * The PHP check and the SQL scope must agree, always.
+     *
+     * Same reasoning as marketable() above: the dashboard counts with the scope
+     * because loading every customer to count them does not scale, and the sender
+     * decides with the method because it has the row in hand. The moment they
+     * disagree, the page promises a number of messages the dispatcher then refuses
+     * to send — and nobody would think to look here for the cause.
+     *
+     * The unsubscribed dimension is in the matrix even though neither the method
+     * nor the scope looks at it, because BusinessSnapshot::tomorrow() relies on
+     * "unreachableReason() === null" meaning exactly "may be messaged AND can be
+     * messaged", and that equivalence is asserted here too.
+     */
+    public function test_with_contact_route_scope_and_has_contact_route_never_disagree(): void
+    {
+        // Every value the preferred_channel column is allowed to hold.
+        $channels = ['whatsapp', 'telegram', 'email', 'sms', 'none'];
+
+        $cases = [];
+        $i = 0;
+
+        foreach ($channels as $channel) {
+            foreach ([true, false] as $hasPhone) {
+                foreach ([true, false] as $hasEmail) {
+                    foreach ([true, false] as $hasTelegram) {
+                        foreach ([null, now()->subDay()] as $unsubscribed) {
+                            $i++;
+
+                            $cases[] = $this->customer([
+                                'preferred_channel' => $channel,
+                                /* Distinct per row: (business_id, phone) really is a
+                                   unique index, so a repeat would fail the insert
+                                   rather than the assertion. Ofcom's reserved
+                                   07700 900xxx drama range, as everywhere else. */
+                                'phone' => $hasPhone
+                                    ? '+44770090'.str_pad((string) $i, 4, '0', STR_PAD_LEFT)
+                                    : null,
+                                'email' => $hasEmail ? "route{$i}@example.test" : null,
+                                'telegram_chat_id' => $hasTelegram ? (string) (600000100 + $i) : null,
+                                'whatsapp_number' => null,
+                                'unsubscribed_at' => $unsubscribed,
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
+        $this->assertCount(80, $cases);
+
+        $withRoute = Customer::withContactRoute()->pluck('id')->all();
+
+        foreach ($cases as $customer) {
+            $describe = sprintf(
+                'channel=%s phone=%s email=%s telegram=%s unsubscribed=%s',
+                $customer->preferred_channel,
+                $customer->phone ?? 'null',
+                $customer->email ?? 'null',
+                $customer->telegram_chat_id ?? 'null',
+                $customer->unsubscribed_at === null ? 'null' : 'set',
+            );
+
+            $this->assertSame(
+                $customer->hasContactRoute(),
+                in_array($customer->id, $withRoute, true),
+                "Scope and method disagree for {$describe}"
+            );
+
+            $this->assertSame(
+                $customer->canReceiveTransactional() && $customer->hasContactRoute(),
+                $customer->unreachableReason() === null,
+                "unreachableReason() disagrees with the two checks it stands for, for {$describe}"
+            );
+        }
+
+        // Sanity check that the matrix did not come out all one answer, which would
+        // make both assertions above pass while proving nothing.
+        $this->assertNotEmpty($withRoute);
+        $this->assertLessThan(count($cases), count($withRoute));
     }
 
     /* ================================================================

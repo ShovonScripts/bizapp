@@ -37,8 +37,20 @@ new class extends Component
                     {{-- Hidden from super-admins: they have no business_id, so the
                          tenant screens abort 403 rather than show every client at once. --}}
                     @unless (auth()->user()->isSuperAdmin())
+                        <x-nav-link :href="route('appointments.index')" :active="request()->routeIs('appointments.*')" wire:navigate>
+                            {{ __('Diary') }}
+                        </x-nav-link>
+
                         <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')" wire:navigate>
                             {{ __('Customers') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')" wire:navigate>
+                            {{ __('Services') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('staff.index')" :active="request()->routeIs('staff.*')" wire:navigate>
+                            {{ __('Staff') }}
                         </x-nav-link>
                     @endunless
                 </div>
@@ -94,8 +106,20 @@ new class extends Component
             </x-responsive-nav-link>
 
             @unless (auth()->user()->isSuperAdmin())
+                <x-responsive-nav-link :href="route('appointments.index')" :active="request()->routeIs('appointments.*')" wire:navigate>
+                    {{ __('Diary') }}
+                </x-responsive-nav-link>
+
                 <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')" wire:navigate>
                     {{ __('Customers') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')" wire:navigate>
+                    {{ __('Services') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('staff.index')" :active="request()->routeIs('staff.*')" wire:navigate>
+                    {{ __('Staff') }}
                 </x-responsive-nav-link>
             @endunless
         </div>

@@ -34,6 +34,10 @@ class DemoBusinessSeeder extends Seeder
                 'name' => 'Super Admin',
                 'password' => Hash::make('password'),
                 'role' => 'admin',
+                // Set now so these accounts keep working the day User starts
+                // implementing MustVerifyEmail — otherwise every demo login
+                // would bounce to /verify-email with no mailer configured.
+                'email_verified_at' => now(),
             ]
         );
 
@@ -90,6 +94,7 @@ class DemoBusinessSeeder extends Seeder
                 'name' => 'Demo Owner',
                 'password' => Hash::make('password'),
                 'role' => 'owner',
+                'email_verified_at' => now(),
             ]
         );
 
@@ -297,6 +302,7 @@ class DemoBusinessSeeder extends Seeder
                 'name' => 'Gym Owner',
                 'password' => Hash::make('password'),
                 'role' => 'owner',
+                'email_verified_at' => now(),
             ]
         );
 

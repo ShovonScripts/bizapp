@@ -479,4 +479,150 @@ class CustomerScreenTest extends TestCase
             ->set('search', 'Sarah')
             ->assertSet('paginators.page', 1);
     }
+
+    /* ================================================================
+     | Telegram invitations
+     * ================================================================ */
+
+    protected function withBot(string $username = 'brighthair_bot'): void
+    {
+        config()->set('messaging.telegram.bot_username', $username);
+    }
+
+    public function test_the_invite_panel_builds_a_link_personal_to_one_customer(): void
+    {
+        $this->withBot();
+
+        $customer = $this->customer(['name' => 'Sarah Whitfield']);
+
+        $this->actingAs($this->owner);
+
+        $component = Volt::test('customers.index')->call('telegramLink', $customer->id);
+
+        $token = $customer->fresh()->telegram_link_token;
+
+        $this->assertNotNull($token, 'The token is written when the link is first needed.');
+
+        $component
+            ->assertSet('linkingId', $customer->id)
+            ->assertSet('linkUrl', "https://t.me/brighthair_bot?start={$token}");
+
+        // The ready-made message has to name both sides, or the customer receives a
+        // bare link from a number they may not recognise and quite reasonably
+        // ignores it.
+        $this->assertStringContainsString('Sarah Whitfield', $component->get('linkMessage'));
+        $this->assertStringContainsString('Salon', $component->get('linkMessage'));
+        $this->assertStringContainsString($token, $component->get('linkMessage'));
+    }
+
+    public function test_an_at_sign_in_the_configured_username_is_tolerated(): void
+    {
+        // BotFather shows the username as @something, so that is what gets pasted
+        // into .env. Two slashes and an @ would produce a link that 404s.
+        $this->withBot('@brighthair_bot');
+
+        $customer = $this->customer();
+
+        $this->actingAs($this->owner);
+
+        $url = Volt::test('customers.index')->call('telegramLink', $customer->id)->get('linkUrl');
+
+        $this->assertStringStartsWith('https://t.me/brighthair_bot?start=', $url);
+    }
+
+    /**
+     * A second click must not mint a new token.
+     *
+     * The owner has often already sent the first link by WhatsApp. Regenerating
+     * would silently break it, and the customer would tap a link that tells them it
+     * is no longer valid — with no way for either of them to work out why.
+     */
+    public function test_opening_the_panel_twice_keeps_the_same_link(): void
+    {
+        $this->withBot();
+
+        $customer = $this->customer();
+
+        $this->actingAs($this->owner);
+
+        $first = Volt::test('customers.index')->call('telegramLink', $customer->id)->get('linkUrl');
+        $second = Volt::test('customers.index')->call('telegramLink', $customer->id)->get('linkUrl');
+
+        $this->assertSame($first, $second);
+    }
+
+    public function test_no_link_is_offered_when_no_bot_is_configured(): void
+    {
+        config()->set('messaging.telegram.bot_username', '');
+
+        $customer = $this->customer();
+
+        $this->actingAs($this->owner);
+
+        Volt::test('customers.index')
+            ->call('telegramLink', $customer->id)
+            ->assertSet('linkingId', null);
+
+        // And no token is burned on a link that could never have worked.
+        $this->assertNull($customer->fresh()->telegram_link_token);
+    }
+
+    /**
+     * Same URL-tampering guard as edit and delete. This one matters more than most:
+     * the response body would contain another business's customer's link token,
+     * which is the one value that lets a stranger receive their reminders.
+     */
+    public function test_another_businesss_customer_cannot_be_invited(): void
+    {
+        $this->withBot();
+
+        $theirs = Customer::factory()->forBusiness($this->gym)->create();
+
+        $this->actingAs($this->owner);
+
+        $this->expectException(ModelNotFoundException::class);
+
+        Volt::test('customers.index')->call('telegramLink', $theirs->id);
+    }
+
+    public function test_closing_the_panel_clears_the_link_from_the_page(): void
+    {
+        $this->withBot();
+
+        $this->actingAs($this->owner);
+
+        Volt::test('customers.index')
+            ->call('telegramLink', $this->customer()->id)
+            ->call('closeLink')
+            ->assertSet('linkingId', null)
+            ->assertSet('linkUrl', '');
+    }
+
+    public function test_the_invite_button_appears_for_someone_who_has_not_linked_yet(): void
+    {
+        $this->customer(['telegram_chat_id' => null, 'preferred_channel' => 'telegram']);
+
+        $this->actingAs($this->owner);
+
+        Volt::test('customers.index')->assertSee('Invite');
+    }
+
+    public function test_there_is_nothing_to_invite_someone_who_is_already_linked(): void
+    {
+        $this->customer(['telegram_chat_id' => '500100', 'preferred_channel' => 'telegram']);
+
+        $this->actingAs($this->owner);
+
+        Volt::test('customers.index')->assertDontSee('Invite');
+    }
+
+    public function test_someone_who_asked_for_no_messages_is_not_offered_an_invite(): void
+    {
+        // Inviting them would be asking a question they have already answered.
+        $this->customer(['preferred_channel' => 'none', 'telegram_chat_id' => null]);
+
+        $this->actingAs($this->owner);
+
+        Volt::test('customers.index')->assertDontSee('Invite');
+    }
 }

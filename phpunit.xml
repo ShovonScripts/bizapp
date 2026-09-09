@@ -29,6 +29,20 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+
+        <!--
+            Nothing sent from a test, ever. The suite creates realistic customers
+            with realistic-looking phone numbers, and a single forgotten Http::fake()
+            would be enough to message one of them for real.
+
+            The token is blanked as well as the driver being forced: belt and braces,
+            because a developer running the suite against their own .env should not
+            be able to reach a live bot even by accident.
+        -->
+        <env name="MESSAGING_DRIVER" value="log"/>
+        <env name="TELEGRAM_BOT_TOKEN" value=""/>
+        <env name="TELEGRAM_WEBHOOK_SECRET" value="testing-webhook-secret"/>
+
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
