@@ -369,8 +369,13 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
             <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
                 <div class="flex-1">
+                    {{-- No <form> around this one, so Enter cannot submit anything —
+                         but on a phone the keyboard still covers the results it just
+                         filtered. Blur on Enter hands the screen back. --}}
                     <x-text-input wire:model.live.debounce.300ms="search"
                                   type="search"
+                                  enterkeyhint="search"
+                                  x-on:keydown.enter.prevent="$event.target.blur()"
                                   class="block w-full"
                                   placeholder="Search name, email or phone…" />
                 </div>
