@@ -32,6 +32,38 @@ class ReminderPlanner
     public function __construct(protected MessagingManager $messaging) {}
 
     /**
+     * The range of appointment START times this planner will consider.
+     *
+     * Exposed so `messages:plan` can explain a run that found nothing. "Planned:
+     * 0 queued" is indistinguishable from a broken planner, and the first thing
+     * anyone does when a reminder does not appear is run the command by hand and
+     * stare at the zeros.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    public function window(?Carbon $now = null): array
+    {
+        $now ??= now();
+        $offset = (int) config('messaging.reminder.offset_minutes', 1440);
+
+        return [
+            /*
+             * It reaches BACKWARDS by catch_up_hours as well as forwards. Shared
+             * hosting cron does stop; without the look-back, every reminder that
+             * came due during an outage is lost silently and permanently, which
+             * is the failure mode an owner would never think to check for.
+             */
+            $now->copy()
+                ->subHours((int) config('messaging.reminder.catch_up_hours', 6))
+                ->addMinutes($offset),
+
+            $now->copy()
+                ->addHours((int) config('messaging.reminder.plan_horizon_hours', 12))
+                ->addMinutes($offset),
+        ];
+    }
+
+    /**
      * @return array{queued: int, skipped: int, already_planned: int, too_close: int}
      */
     public function plan(): array
@@ -41,20 +73,10 @@ class ReminderPlanner
 
         /*
          * The window is expressed in appointment start times, not send times,
-         * because that is the indexed column.
-         *
-         * It reaches BACKWARDS by catch_up_hours as well as forwards. Shared
-         * hosting cron does stop; without the look-back, every reminder that came
-         * due during an outage is lost silently and permanently, which is the
-         * failure mode an owner would never think to check for.
+         * because that is the indexed column. See window() above for why it
+         * reaches backwards as well as forwards.
          */
-        $from = $now->copy()
-            ->subHours((int) config('messaging.reminder.catch_up_hours', 6))
-            ->addMinutes($offset);
-
-        $to = $now->copy()
-            ->addHours((int) config('messaging.reminder.plan_horizon_hours', 12))
-            ->addMinutes($offset);
+        [$from, $to] = $this->window($now);
 
         /*
          * No withoutGlobalScope() here, deliberately.
