@@ -5,6 +5,7 @@ use App\Models\Business;
 use App\Models\Customer;
 use App\Support\Phone;
 use App\Support\Tenant;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -279,9 +280,17 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
         $username = ltrim(trim((string) config('messaging.telegram.bot_username')), '@');
 
         if ($username === '') {
-            // Developer-facing, and deliberately not silent: without this the link
-            // would be https://t.me/?start=… , which looks plausible and goes nowhere.
-            $this->toast('Telegram is not set up yet — add TELEGRAM_BOT_USERNAME to your .env.');
+            // Two audiences, two messages. The owner gets something they can act on
+            // — ring the person who set this up — and never sees the name of an
+            // environment variable. The detail that actually fixes it goes to the
+            // log, where the developer is looking. Silence is not an option either
+            // way: without this the link would be https://t.me/?start=… , which
+            // looks plausible and goes nowhere.
+            Log::warning('Telegram invite blocked: messaging.telegram.bot_username is empty.', [
+                'business_id' => Tenant::id(),
+            ]);
+
+            $this->toast('Telegram invites are not switched on yet. Ask whoever set up your account to finish connecting it.');
 
             return;
         }
@@ -366,17 +375,129 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                   placeholder="Search name, email or phone…" />
                 </div>
 
-                <select wire:model.live="filter"
-                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                <x-select-input wire:model.live="filter" aria-label="Filter the customer list">
                     <option value="all">All customers</option>
                     <option value="marketable">Can receive marketing</option>
                     <option value="lapsed">Not seen in 90 days</option>
                     <option value="unsubscribed">Unsubscribed</option>
                     <option value="unlinked">Telegram not linked</option>
-                </select>
+                </x-select-input>
             </div>
 
-            <div class="overflow-x-auto">
+            @php
+                // Same button vocabulary as the diary's row actions, so the owner
+                // learns one interaction and it works everywhere.
+                $act = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600';
+                $actDanger = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600';
+            @endphp
+
+            @if ($customers->isEmpty())
+                <div class="px-4 py-12 text-center">
+                    @if ($search !== '' || $filter !== 'all')
+                        <p class="text-gray-500">No customers match that.</p>
+                    @else
+                        <p class="text-gray-500">No customers yet.</p>
+                        <p class="mt-1 text-sm text-gray-500">Add the people you see regularly and the reminders take care of themselves.</p>
+                        <x-primary-button type="button" wire:click="create" class="mt-4">Add your first customer</x-primary-button>
+                    @endif
+                </div>
+            @else
+
+            {{--
+                ─── Phone: cards ───────────────────────────────────────────────
+                Six columns cannot survive a 390px screen. The table below is kept
+                for desktop, where comparing across rows is the point; here the name
+                leads, the phone number is a tap-to-call link, and everything else is
+                one line of context underneath.
+
+                wire:key is prefixed differently from the table's: both lists sit in
+                the DOM at once — one is only hidden by CSS — and Livewire needs every
+                key in a component to be unique.
+            --}}
+            <ul class="divide-y divide-gray-100 sm:hidden">
+                @foreach ($customers as $customer)
+                    <li wire:key="customer-card-{{ $customer->id }}" x-data="{ actions: false }" class="p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="font-medium text-gray-900">{{ $customer->name }}</div>
+
+                                @if ($customer->phone)
+                                    {{-- tel: because on a phone the answer to "who is this?" is
+                                         usually "ring them". --}}
+                                    <a href="tel:{{ $customer->phone }}"
+                                       class="inline-flex min-h-touch items-center rounded-lg text-sm font-medium text-mulberry-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                        {{ \App\Support\Phone::forHumans($customer->phone) }}
+                                    </a>
+                                @else
+                                    <p class="mt-0.5 text-sm text-gray-500">No phone number — cannot be reminded</p>
+                                @endif
+                            </div>
+
+                            <button type="button" @click="actions = ! actions"
+                                    :aria-expanded="actions ? 'true' : 'false'"
+                                    aria-label="More actions for {{ $customer->name }}"
+                                    class="-me-1 inline-flex min-h-touch min-w-touch shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 11.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm text-gray-500">
+                            <span>
+                                Last visit
+                                <span class="font-medium text-gray-900">
+                                    {{ $customer->last_visit_at ? $customer->last_visit_at->diffForHumans(short: true) : 'never' }}
+                                </span>
+                            </span>
+
+                            <span>
+                                Spent
+                                <span class="font-medium tabular-nums text-gray-900">£{{ number_format((float) $customer->total_spend, 2) }}</span>
+                            </span>
+
+                            <span>
+                                @if ($customer->preferred_channel === 'none')
+                                    <span class="font-medium text-gray-900">No messages</span>
+                                @else
+                                    Messages by
+                                    <span class="font-medium text-gray-900">{{ \App\Support\Channel::label($customer->preferred_channel) }}</span>
+                                @endif
+                            </span>
+                        </div>
+
+                        @if ($customer->unsubscribed_at || $customer->marketing_consent || $customer->telegramLinked())
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                @if ($customer->unsubscribed_at)
+                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">Unsubscribed</span>
+                                @elseif ($customer->marketing_consent)
+                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-green-50 text-green-700">Marketing OK</span>
+                                @endif
+
+                                @if ($customer->telegramLinked())
+                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-sky-50 text-sky-700">Telegram</span>
+                                @endif
+                            </div>
+                        @endif
+
+                        <div x-show="actions" x-collapse style="display: none"
+                             class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                            <button type="button" wire:click="edit({{ $customer->id }})" class="{{ $act }}">Edit</button>
+
+                            @if (! $customer->telegramLinked() && $customer->preferred_channel !== 'none')
+                                <button type="button" wire:click="telegramLink({{ $customer->id }})" class="{{ $act }}">Invite to Telegram</button>
+                            @endif
+
+                            <button type="button" wire:click="delete({{ $customer->id }})"
+                                    wire:confirm="Remove {{ $customer->name }}? Their appointment history is kept."
+                                    class="{{ $actDanger }}">Remove</button>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+
+            {{-- ─── Desktop: the table ───────────────────────────────────────── --}}
+            <div class="hidden overflow-x-auto sm:block">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                         <tr>
@@ -390,8 +511,8 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                     </thead>
 
                     <tbody class="divide-y divide-gray-100">
-                        @forelse ($customers as $customer)
-                            <tr wire:key="customer-{{ $customer->id }}" class="hover:bg-gray-50">
+                        @foreach ($customers as $customer)
+                            <tr wire:key="customer-row-{{ $customer->id }}" class="hover:bg-gray-50">
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-gray-900">{{ $customer->name }}</div>
 
@@ -424,17 +545,17 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                     {{ \App\Support\Phone::forHumans($customer->phone) ?? '—' }}
                                 </td>
 
-                                <td class="px-4 py-3 text-gray-700 capitalize">{{ $customer->preferred_channel }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ \App\Support\Channel::label($customer->preferred_channel) }}</td>
 
                                 <td class="px-4 py-3 text-gray-700 whitespace-nowrap">
                                     @if ($customer->last_visit_at)
                                         {{ $customer->last_visit_at->diffForHumans(short: true) }}
                                     @else
-                                        <span class="text-gray-400">never</span>
+                                        <span class="text-gray-500">never</span>
                                     @endif
                                 </td>
 
-                                <td class="px-4 py-3 text-right text-gray-700 whitespace-nowrap">
+                                <td class="px-4 py-3 text-right text-gray-700 tabular-nums whitespace-nowrap">
                                     £{{ number_format((float) $customer->total_spend, 2) }}
                                 </td>
 
@@ -444,31 +565,22 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                              asked for no messages at all: sending them an invite
                                              would be asking a question they already answered. --}}
                                         <button type="button" wire:click="telegramLink({{ $customer->id }})"
-                                                class="me-3 font-medium text-sky-600 hover:text-sky-800">Invite</button>
+                                                class="me-3 rounded font-medium text-sky-700 hover:text-sky-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">Invite</button>
                                     @endif
 
                                     <button type="button" wire:click="edit({{ $customer->id }})"
-                                            class="font-medium text-indigo-600 hover:text-indigo-900">Edit</button>
+                                            class="rounded font-medium text-mulberry-700 hover:text-mulberry-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">Edit</button>
 
                                     <button type="button" wire:click="delete({{ $customer->id }})"
                                             wire:confirm="Remove {{ $customer->name }}? Their appointment history is kept."
-                                            class="ms-3 text-gray-400 hover:text-red-600">Remove</button>
+                                            class="ms-3 rounded text-gray-500 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600">Remove</button>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-4 py-10 text-center text-gray-500">
-                                    @if ($search !== '' || $filter !== 'all')
-                                        No customers match that.
-                                    @else
-                                        No customers yet. Add your first one to get started.
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
+            @endif
 
             @if ($customers->hasPages())
                 <div class="p-4 border-t border-gray-100">{{ $customers->links() }}</div>
@@ -510,27 +622,24 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                 <div>
                     <x-input-label for="preferred_channel" value="Preferred channel" />
-                    <select wire:model="preferred_channel" id="preferred_channel"
-                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                    <x-select-input wire:model="preferred_channel" id="preferred_channel" class="mt-1 block w-full">
                         @foreach ($channels as $channel)
-                            <option value="{{ $channel }}">
-                                {{ $channel === 'none' ? 'No messages' : ucfirst($channel) }}
-                            </option>
+                            <option value="{{ $channel }}">{{ \App\Support\Channel::label($channel) }}</option>
                         @endforeach
-                    </select>
+                    </x-select-input>
                     <x-input-error :messages="$errors->get('preferred_channel')" class="mt-2" />
                 </div>
 
                 <div>
                     <x-input-label for="notes" value="Notes" />
                     <textarea wire:model="notes" id="notes" rows="2"
-                              class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"></textarea>
+                              class="mt-1 block w-full rounded-lg border-gray-300 text-base shadow-sm focus:border-mulberry-600 focus:ring-mulberry-600 sm:text-sm"></textarea>
                     <x-input-error :messages="$errors->get('notes')" class="mt-2" />
                 </div>
 
                 <label class="flex items-start gap-2 rounded-md bg-gray-50 p-3">
                     <input type="checkbox" wire:model="marketing_consent"
-                           class="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                           class="mt-0.5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
                     <span class="text-sm text-gray-700">
                         Happy to receive offers and news
                         <span class="block text-xs text-gray-500">
@@ -545,18 +654,39 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
     @if ($linkingId)
         {{-- Not x-form-modal: there is nothing to submit here. The whole panel is a
              clipboard, and the owner's next action happens in WhatsApp. --}}
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
              wire:key="tg-invite-{{ $linkingId }}">
 
-            <div class="fixed inset-0 bg-gray-900/50" wire:click="closeLink"></div>
+            {{-- Backdrop dismiss is kept here, unlike <x-form-modal>: nothing is lost by
+                 closing this panel — the link is already saved and reopening shows the
+                 same one — so the usual "a stray tap threw away my typing" risk does
+                 not apply. --}}
+            <div class="fixed inset-0 bg-gray-900/50" wire:click="closeLink" aria-hidden="true"></div>
 
-            <div class="relative w-full max-w-lg rounded-lg bg-white shadow-xl"
-                 x-data="{ copied: null }"
-                 x-on:keydown.escape.window="$wire.closeLink()">
+            <div class="relative flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:max-h-[85vh] sm:max-w-lg sm:rounded-lg"
+                 x-data="{
+                     copied: null,
+                     init() {
+                         document.body.classList.add('overflow-hidden');
+                     },
+                     destroy() {
+                         document.body.classList.remove('overflow-hidden');
+                     },
+                     copy(ref) {
+                         this.$refs[ref].select();
+                         navigator.clipboard?.writeText(this.$refs[ref].value);
+                         this.copied = ref;
+                         setTimeout(() => this.copied = null, 2000);
+                     },
+                 }"
+                 x-on:keydown.escape.window="$wire.closeLink()"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="tg-invite-title">
 
-                <div class="p-6 space-y-4">
+                <div class="flex-1 space-y-4 overflow-y-auto p-5">
                     <div>
-                        <h2 class="text-lg font-medium text-gray-900">Invite to Telegram</h2>
+                        <h2 id="tg-invite-title" class="text-lg font-semibold text-gray-900">Invite to Telegram</h2>
                         <p class="mt-1 text-sm text-gray-500">
                             Telegram won't let us message someone until they've started the bot
                             themselves, so send them this link. It's personal to them — one link
@@ -567,32 +697,25 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                     <div>
                         <x-input-label value="Ready-made message" />
                         <textarea readonly rows="3" x-ref="message"
-                                  class="mt-1 block w-full text-sm border-gray-300 bg-gray-50 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                  class="mt-1 block w-full rounded-lg border-gray-300 bg-gray-50 text-base shadow-sm focus:border-mulberry-600 focus:ring-mulberry-600 sm:text-sm"
                                   >{{ $linkMessage }}</textarea>
 
-                        <button type="button"
-                                x-on:click="$refs.message.select();
-                                            navigator.clipboard?.writeText($refs.message.value);
-                                            copied = 'message'; setTimeout(() => copied = null, 2000)"
-                                class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                            <span x-show="copied !== 'message'">Copy message</span>
-                            <span x-show="copied === 'message'" class="text-green-600">Copied</span>
-                        </button>
+                        {{-- One label swapped by Alpine rather than two spans toggled: with
+                             two, "Copied" was in the DOM and visible for the moment before
+                             Alpine booted, so the button flashed the wrong word on load. --}}
+                        <button type="button" x-on:click="copy('message')"
+                                class="mt-2 inline-flex min-h-touch items-center rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600"
+                                x-text="copied === 'message' ? 'Copied' : 'Copy message'">Copy message</button>
                     </div>
 
                     <div>
                         <x-input-label value="Link only" />
                         <input type="text" readonly x-ref="url" value="{{ $linkUrl }}"
-                               class="mt-1 block w-full text-sm border-gray-300 bg-gray-50 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                               class="mt-1 block w-full min-h-touch rounded-lg border-gray-300 bg-gray-50 text-base shadow-sm focus:border-mulberry-600 focus:ring-mulberry-600 sm:text-sm">
 
-                        <button type="button"
-                                x-on:click="$refs.url.select();
-                                            navigator.clipboard?.writeText($refs.url.value);
-                                            copied = 'url'; setTimeout(() => copied = null, 2000)"
-                                class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                            <span x-show="copied !== 'url'">Copy link</span>
-                            <span x-show="copied === 'url'" class="text-green-600">Copied</span>
-                        </button>
+                        <button type="button" x-on:click="copy('url')"
+                                class="mt-2 inline-flex min-h-touch items-center rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600"
+                                x-text="copied === 'url' ? 'Copied' : 'Copy link'">Copy link</button>
 
                         {{-- The clipboard API only exists on https and localhost, so the
                              fields above are selectable and read-only rather than hidden:
@@ -603,7 +726,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 rounded-b-lg bg-gray-50 px-6 py-4">
+                <div class="flex shrink-0 justify-end gap-3 border-t border-gray-200 bg-gray-50 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                     <x-secondary-button type="button" wire:click="closeLink">Done</x-secondary-button>
                 </div>
             </div>

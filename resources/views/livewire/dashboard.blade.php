@@ -17,8 +17,8 @@ use Livewire\Volt\Component;
  * Every other tenant screen aborts 403 for a super-admin, because business_id =
  * null means "unscoped" to the global scope and they would otherwise see every
  * client's records merged into one list. This is where login lands, though, and
- * navigation.blade.php puts the logo link and the Dashboard link OUTSIDE its
- * `@unless (auth()->user()->isSuperAdmin())` guard — so a 403 here would leave a
+ * navigation.blade.php puts the logo link and the Today link OUTSIDE its
+ * `$tenantScreens` guard — so a 403 here would leave a
  * super-admin on a page whose every visible link 403s too. DemoBusinessSeeder
  * really does create admin@example.com with a null business_id, so this is a
  * state we ship, not a hypothetical.
@@ -206,7 +206,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 </div>
 
                 <a href="{{ route('appointments.index') }}" wire:navigate
-                   class="shrink-0 text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                   class="shrink-0 text-sm font-medium text-mulberry-700 hover:text-mulberry-900">
                     Open the diary &rarr;
                 </a>
             </div>
@@ -235,7 +235,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                             @else
                                 <span class="font-semibold text-gray-300">&bull;</span>
                                 <a href="{{ route('services.index') }}" wire:navigate
-                                   class="font-medium text-indigo-600 hover:text-indigo-900">
+                                   class="font-medium text-mulberry-700 hover:text-mulberry-900">
                                     Add what you offer
                                 </a>
                                 <span class="text-gray-500">&mdash; name, how long, how much</span>
@@ -252,7 +252,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                             @else
                                 <span class="font-semibold text-gray-300">&bull;</span>
                                 <a href="{{ route('customers.index') }}" wire:navigate
-                                   class="font-medium text-indigo-600 hover:text-indigo-900">
+                                   class="font-medium text-mulberry-700 hover:text-mulberry-900">
                                     Add your first customer
                                 </a>
                                 <span class="text-gray-500">&mdash; a mobile number is enough</span>
@@ -365,14 +365,14 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                         <div class="flex items-center justify-between border-b border-gray-100 p-4">
                             <h2 class="font-semibold text-gray-900">Your day</h2>
                             <a href="{{ route('appointments.index', ['day' => $today['date']->toDateString()]) }}"
-                               wire:navigate class="text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                               wire:navigate class="text-sm font-medium text-mulberry-700 hover:text-mulberry-900">
                                 Diary
                             </a>
                         </div>
 
                         @if ($today['next'])
-                            <div class="border-b border-gray-100 bg-indigo-50 p-4">
-                                <div class="text-xs uppercase tracking-wider text-indigo-700">Next up</div>
+                            <div class="border-b border-gray-100 bg-mulberry-50 p-4">
+                                <div class="text-xs uppercase tracking-wider text-mulberry-800">Next up</div>
                                 <div class="mt-1 font-medium text-gray-900">
                                     {{ $at($today['next']->starts_at) }}
                                     &middot; {{ $today['next']->customer?->name ?? 'Customer removed' }}
@@ -418,7 +418,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                 <li class="p-4 text-gray-500">
                                     Nothing booked today.
                                     <a href="{{ route('appointments.index') }}" wire:navigate
-                                       class="font-medium text-indigo-600 hover:text-indigo-900">Add a booking</a>
+                                       class="font-medium text-mulberry-700 hover:text-mulberry-900">Add a booking</a>
                                 </li>
                             @endforelse
                         </ul>
@@ -506,7 +506,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                     @endif
 
                                     <a href="{{ route('customers.index', ['filter' => 'lapsed']) }}" wire:navigate
-                                       class="inline-block font-medium text-indigo-600 hover:text-indigo-900">
+                                       class="inline-block font-medium text-mulberry-700 hover:text-mulberry-900">
                                         See who
                                     </a>
                                 @endif

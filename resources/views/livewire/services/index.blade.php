@@ -175,16 +175,78 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
         <div class="bg-white shadow-sm sm:rounded-lg">
 
             @if ($inactiveCount > 0)
-                <div class="border-b border-gray-100 p-4">
-                    <label class="inline-flex items-center gap-2 text-sm text-gray-600">
+                <div class="border-b border-gray-100 px-4">
+                    <label class="inline-flex min-h-touch items-center gap-2 py-2 text-sm text-gray-600">
                         <input type="checkbox" wire:model.live="showInactive"
-                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                               class="h-5 w-5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
                         Show hidden ({{ $inactiveCount }})
                     </label>
                 </div>
             @endif
 
-            <div class="overflow-x-auto">
+            @php
+                $act = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600';
+                $actDanger = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600';
+            @endphp
+
+            @if ($services->isEmpty())
+                <div class="px-4 py-12 text-center">
+                    @if ($inactiveCount > 0)
+                        {{-- Not "no services yet": there are some, they are just all
+                             hidden, and the toggle to bring them back is right above. --}}
+                        <p class="text-gray-500">Everything is hidden right now.</p>
+                        <p class="mt-1 text-sm text-gray-500">Tick "Show hidden ({{ $inactiveCount }})" above to see them.</p>
+                    @else
+                        <p class="text-gray-500">No services yet.</p>
+                        <p class="mt-1 text-sm text-gray-500">Add the ones you book most often first — the rest can wait.</p>
+                        <x-primary-button type="button" wire:click="create" class="mt-4">Add your first service</x-primary-button>
+                    @endif
+                </div>
+            @else
+
+            {{-- ─── Phone: cards. Keys are prefixed apart from the table's below. ─── --}}
+            <ul class="divide-y divide-gray-100 sm:hidden">
+                @foreach ($services as $service)
+                    <li wire:key="service-card-{{ $service->id }}"
+                        class="p-4 {{ $service->active ? '' : 'opacity-60' }}">
+
+                        <div class="font-medium text-gray-900">
+                            {{ $service->name }}
+
+                            @unless ($service->active)
+                                <span class="ms-1 inline-flex rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600">Hidden</span>
+                            @endunless
+                        </div>
+
+                        @if ($service->description)
+                            <p class="mt-0.5 text-sm text-gray-500">{{ $service->description }}</p>
+                        @endif
+
+                        <div class="mt-1 flex flex-wrap items-baseline gap-x-4 text-sm text-gray-500">
+                            <span class="font-medium tabular-nums text-gray-900">{{ $service->duration_minutes }} min</span>
+                            <span class="font-medium tabular-nums text-gray-900">£{{ number_format((float) $service->price, 2) }}</span>
+                            <span>Booked <span class="font-medium tabular-nums text-gray-900">{{ (int) $service->appointments_count }}</span> times</span>
+                        </div>
+
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button type="button" wire:click="edit({{ $service->id }})" class="{{ $act }}">Edit</button>
+
+                            <button type="button" wire:click="toggleActive({{ $service->id }})" class="{{ $act }}">
+                                {{ $service->active ? 'Hide' : 'Show' }}
+                            </button>
+
+                            @if ((int) $service->appointments_count === 0)
+                                <button type="button" wire:click="delete({{ $service->id }})"
+                                        wire:confirm="Delete {{ $service->name }}?"
+                                        class="{{ $actDanger }}">Delete</button>
+                            @endif
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+
+            {{-- ─── Desktop: the table ───────────────────────────────────────── --}}
+            <div class="hidden overflow-x-auto sm:block">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                         <tr>
@@ -197,8 +259,8 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                     </thead>
 
                     <tbody class="divide-y divide-gray-100">
-                        @forelse ($services as $service)
-                            <tr wire:key="service-{{ $service->id }}"
+                        @foreach ($services as $service)
+                            <tr wire:key="service-row-{{ $service->id }}"
                                 class="hover:bg-gray-50 {{ $service->active ? '' : 'opacity-60' }}">
 
                                 <td class="px-4 py-3">
@@ -217,24 +279,24 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                                     @endif
                                 </td>
 
-                                <td class="px-4 py-3 text-right text-gray-700 whitespace-nowrap">
+                                <td class="px-4 py-3 text-right text-gray-700 tabular-nums whitespace-nowrap">
                                     {{ $service->duration_minutes }} min
                                 </td>
 
-                                <td class="px-4 py-3 text-right text-gray-700 whitespace-nowrap">
+                                <td class="px-4 py-3 text-right text-gray-700 tabular-nums whitespace-nowrap">
                                     £{{ number_format((float) $service->price, 2) }}
                                 </td>
 
-                                <td class="px-4 py-3 text-right text-gray-500 whitespace-nowrap">
+                                <td class="px-4 py-3 text-right text-gray-500 tabular-nums whitespace-nowrap">
                                     {{ (int) $service->appointments_count }}
                                 </td>
 
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
                                     <button type="button" wire:click="edit({{ $service->id }})"
-                                            class="font-medium text-indigo-600 hover:text-indigo-900">Edit</button>
+                                            class="rounded font-medium text-mulberry-700 hover:text-mulberry-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">Edit</button>
 
                                     <button type="button" wire:click="toggleActive({{ $service->id }})"
-                                            class="ms-3 text-gray-500 hover:text-gray-900">
+                                            class="ms-3 rounded text-gray-600 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
                                         {{ $service->active ? 'Hide' : 'Show' }}
                                     </button>
 
@@ -244,20 +306,15 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                                     @if ((int) $service->appointments_count === 0)
                                         <button type="button" wire:click="delete({{ $service->id }})"
                                                 wire:confirm="Delete {{ $service->name }}?"
-                                                class="ms-3 text-gray-400 hover:text-red-600">Delete</button>
+                                                class="ms-3 rounded text-gray-500 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600">Delete</button>
                                     @endif
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-4 py-10 text-center text-gray-500">
-                                    No services yet. Add the ones you book most often first.
-                                </td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
+            @endif
         </div>
     </div>
 
@@ -295,16 +352,17 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                 </div>
 
                 <div>
-                    <x-input-label for="sort_order" value="Display order" />
+                    <x-input-label for="sort_order" value="Order in the list" />
                     <x-text-input wire:model="sort_order" id="sort_order" type="number"
                                   min="0" max="999" class="mt-1 block w-full" />
+                    <p class="mt-1 text-xs text-gray-500">Low numbers show first. Leave it at 0 if you don't mind.</p>
                     <x-input-error :messages="$errors->get('sort_order')" class="mt-2" />
                 </div>
             </div>
 
-            <label class="flex items-start gap-2 rounded-md bg-gray-50 p-3">
+            <label class="flex min-h-touch items-start gap-3 rounded-lg bg-gray-50 p-3">
                 <input type="checkbox" wire:model="active"
-                       class="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                       class="mt-0.5 h-5 w-5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
                 <span class="text-sm text-gray-700">
                     Available to book
                     <span class="block text-xs text-gray-500">

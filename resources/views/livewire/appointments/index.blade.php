@@ -692,38 +692,49 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
         ---------------------------------------------------------------- --}}
         <div class="bg-white shadow-sm sm:rounded-lg">
             <div class="flex items-center gap-2 border-b border-gray-100 p-3">
+                {{-- These two arrows are how the diary is actually navigated, so they
+                     get full targets rather than the 30px they had. --}}
                 <button type="button" wire:click="previousDay"
-                        class="rounded-md px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                        aria-label="Previous day">&larr;</button>
+                        class="inline-flex min-h-touch min-w-touch items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600"
+                        aria-label="Previous day">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L9.06 10l3.71 3.71a.75.75 0 11-1.06 1.06l-4.25-4.25a.75.75 0 010-1.06l4.25-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                    </svg>
+                </button>
 
                 <button type="button" wire:click="goToToday"
-                        class="rounded-md px-3 py-1 text-sm font-medium text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50">
+                        class="inline-flex min-h-touch items-center justify-center rounded-lg px-4 text-sm font-medium text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
                     Today
                 </button>
 
                 <button type="button" wire:click="nextDay"
-                        class="rounded-md px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                        aria-label="Next day">&rarr;</button>
+                        class="inline-flex min-h-touch min-w-touch items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600"
+                        aria-label="Next day">
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L10.94 10 7.23 6.29a.75.75 0 111.06-1.06l4.25 4.25a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                    </svg>
+                </button>
 
-                <input type="date" wire:model.live="date"
-                       class="ms-auto rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <input type="date" wire:model.live="date" aria-label="Jump to a date"
+                       class="ms-auto min-h-touch rounded-lg border-gray-300 text-base shadow-sm focus:border-mulberry-600 focus:ring-mulberry-600 sm:text-sm">
             </div>
 
             <div class="grid grid-cols-7 divide-x divide-gray-100">
                 @foreach ($weekStrip as $day)
                     <button type="button" wire:key="strip-{{ $day['date'] }}"
                             wire:click="goToDate('{{ $day['date'] }}')"
-                            class="px-1 py-3 text-center transition {{ $day['isSelected'] ? 'bg-indigo-50' : 'hover:bg-gray-50' }}">
+                            @if ($day['isSelected']) aria-current="date" @endif
+                            class="px-1 py-3 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-mulberry-600 {{ $day['isSelected'] ? 'bg-mulberry-50' : 'hover:bg-gray-50' }}">
 
-                        <span class="block text-xs uppercase tracking-wide {{ $day['isToday'] ? 'font-semibold text-indigo-600' : 'text-gray-400' }}">
+                        <span class="block text-xs uppercase tracking-wide {{ $day['isToday'] ? 'font-semibold text-mulberry-700' : 'text-gray-500' }}">
                             {{ $day['weekday'] }}
                         </span>
 
-                        <span class="mt-0.5 block text-lg leading-none {{ $day['isSelected'] ? 'font-semibold text-indigo-700' : 'text-gray-900' }}">
+                        <span class="mt-0.5 block text-lg leading-none tabular-nums {{ $day['isSelected'] ? 'font-semibold text-mulberry-800' : 'text-gray-900' }}">
                             {{ $day['dayOfMonth'] }}
                         </span>
 
-                        <span class="mt-1 block text-xs {{ $day['count'] > 0 ? 'text-gray-500' : 'text-gray-300' }}">
+                        <span class="mt-1 block text-xs tabular-nums {{ $day['count'] > 0 ? 'text-gray-500' : 'text-gray-300' }}">
                             {{ $day['count'] > 0 ? $day['count'] : '·' }}
                         </span>
                     </button>
@@ -737,17 +748,16 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
         <div class="bg-white shadow-sm sm:rounded-lg">
 
             <div class="flex flex-wrap items-center gap-4 border-b border-gray-100 p-4">
-                <select wire:model.live="staffFilter"
-                        class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <x-select-input wire:model.live="staffFilter" aria-label="Show one person's bookings">
                     <option value="">Everyone</option>
                     @foreach ($staffForFilter as $member)
                         <option value="{{ $member->id }}">{{ $member->name }}</option>
                     @endforeach
-                </select>
+                </x-select-input>
 
-                <label class="inline-flex items-center gap-2 text-sm text-gray-600">
+                <label class="inline-flex min-h-touch items-center gap-2 text-sm text-gray-600">
                     <input type="checkbox" wire:model.live="showCancelled"
-                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                           class="h-5 w-5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
                     Show cancellations
                 </label>
 
@@ -762,97 +772,157 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                 </span>
             </div>
 
+            @php
+                /*
+                 * Every action in the expanded strip is a real 44px target. Defined
+                 * once here rather than inside the loop, where it would be rebuilt
+                 * for every booking on the day.
+                 */
+                $act = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600';
+                $actDanger = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600';
+            @endphp
+
             <ul class="divide-y divide-gray-100">
                 @forelse ($appointments as $appointment)
+                    @php
+                        $isActive = in_array($appointment->status, \App\Models\Appointment::REMINDABLE, true);
+                        $isPending = $appointment->status === \App\Models\Appointment::PENDING;
+                    @endphp
+
                     <li wire:key="appointment-{{ $appointment->id }}"
-                        class="flex flex-wrap items-start gap-4 p-4 hover:bg-gray-50 {{ $appointment->isCancelled() ? 'opacity-60' : '' }}">
+                        x-data="{ actions: false }"
+                        class="p-4 {{ $appointment->isCancelled() ? 'opacity-75' : '' }}">
 
-                        {{-- Time --}}
-                        <div class="w-24 shrink-0">
-                            <div class="font-semibold tabular-nums text-gray-900">
-                                {{ $business->toLocal($appointment->starts_at)->format('H:i') }}
-                            </div>
-                            <div class="text-xs tabular-nums text-gray-400">
-                                {{ $business->toLocal($appointment->ends_at)->format('H:i') }}
-                            </div>
-                        </div>
+                        <div class="flex flex-wrap items-start gap-x-4 gap-y-3">
 
-                        {{-- Who and what --}}
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="font-medium text-gray-900">
-                                    {{ $appointment->customer?->name ?? 'Customer removed' }}
-                                </span>
-
-                                <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ $this->statusBadge($appointment->status) }}">
-                                    {{ $appointment->statusLabel() }}
-                                </span>
-                            </div>
-
-                            <div class="mt-0.5 text-sm text-gray-600">
-                                {{-- Blank only if the service or staff record was hard-deleted;
-                                     the screens prevent that, but history can predate them. --}}
-                                {{ $appointment->service?->name ?? 'No service set' }}
-
-                                @if ($appointment->staffMember)
-                                    <span class="text-gray-400">·</span>
-                                    <span class="inline-flex items-center gap-1">
-                                        <span class="inline-block h-2 w-2 rounded-full"
-                                              style="background-color: {{ $appointment->staffMember->color }}"></span>
-                                        {{ $appointment->staffMember->name }}
-                                    </span>
-                                @endif
-
-                                <span class="text-gray-400">·</span>
-                                £{{ number_format((float) $appointment->price, 2) }}
-                            </div>
-
-                            @if ($appointment->notes)
-                                <div class="mt-1 text-sm text-gray-500">{{ $appointment->notes }}</div>
-                            @endif
-
-                            @if ($appointment->customer && ! $appointment->customer->canReceiveTransactional())
-                                <div class="mt-1 text-xs text-amber-700">
-                                    No reminder will be sent — this customer has opted out.
+                            {{-- Time. The one thing on this screen allowed to shout:
+                                 it is what the eye looks for when the phone comes out
+                                 mid-appointment. --}}
+                            <div class="w-16 shrink-0 sm:w-24">
+                                <div class="text-lg font-semibold leading-tight tabular-nums text-gray-900">
+                                    {{ $business->toLocal($appointment->starts_at)->format('H:i') }}
                                 </div>
-                            @endif
-                        </div>
+                                <div class="text-xs tabular-nums text-gray-500">
+                                    till {{ $business->toLocal($appointment->ends_at)->format('H:i') }}
+                                </div>
+                            </div>
 
-                        {{-- Actions --}}
-                        <div class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                            <button type="button" wire:click="edit({{ $appointment->id }})"
-                                    class="font-medium text-indigo-600 hover:text-indigo-900">Edit</button>
+                            {{-- Who and what --}}
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-medium text-gray-900">
+                                        {{ $appointment->customer?->name ?? 'Customer removed' }}
+                                    </span>
 
-                            @if (in_array($appointment->status, \App\Models\Appointment::REMINDABLE, true))
-                                @if ($appointment->status === \App\Models\Appointment::PENDING)
-                                    <button type="button" wire:click="setStatus({{ $appointment->id }}, 'confirmed')"
-                                            class="text-sky-700 hover:text-sky-900">Confirm</button>
+                                    <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ $this->statusBadge($appointment->status) }}">
+                                        {{ $appointment->statusLabel() }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-0.5 text-sm text-gray-600">
+                                    {{-- Blank only if the service or staff record was hard-deleted;
+                                         the screens prevent that, but history can predate them. --}}
+                                    {{ $appointment->service?->name ?? 'No service set' }}
+
+                                    @if ($appointment->staffMember)
+                                        <span class="text-gray-400">·</span>
+                                        <span class="inline-flex items-center gap-1">
+                                            <span class="inline-block h-2 w-2 rounded-full"
+                                                  style="background-color: {{ $appointment->staffMember->color }}"></span>
+                                            {{ $appointment->staffMember->name }}
+                                        </span>
+                                    @endif
+
+                                    <span class="text-gray-400">·</span>
+                                    £{{ number_format((float) $appointment->price, 2) }}
+                                </div>
+
+                                @if ($appointment->notes)
+                                    <div class="mt-1 text-sm text-gray-500">{{ $appointment->notes }}</div>
                                 @endif
 
-                                <button type="button" wire:click="setStatus({{ $appointment->id }}, 'completed')"
-                                        class="text-emerald-700 hover:text-emerald-900">Done</button>
+                                @if ($appointment->customer && ! $appointment->customer->canReceiveTransactional())
+                                    <div class="mt-1 text-xs text-amber-700">
+                                        No reminder will be sent — this customer has opted out.
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{--
+                                One action inline, the rest a tap away.
+
+                                This used to be six bare text links, 20px tall and 12px
+                                apart, with "Done" immediately beside "No-show" — on the
+                                screen an owner uses all day, one-handed, with wet hands.
+                                The inline button is whatever comes next in the booking's
+                                life; everything else moves into the strip below, where it
+                                gets a real target and cannot be hit by accident.
+
+                                w-full puts the cluster on its own line on a phone and
+                                sm:w-auto returns it to the end of the row on a desktop.
+                            --}}
+                            <div class="flex w-full items-center justify-end gap-2 sm:w-auto">
+                                @if ($isActive)
+                                    <button type="button"
+                                            wire:click="setStatus({{ $appointment->id }}, '{{ $isPending ? 'confirmed' : 'completed' }}')"
+                                            class="inline-flex items-center justify-center min-h-touch rounded-lg px-4 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 {{ $isPending ? 'bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200 hover:bg-sky-100 focus-visible:ring-sky-600' : 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-100 focus-visible:ring-emerald-600' }}">
+                                        {{ $isPending ? 'Confirm' : 'Done' }}
+                                    </button>
+                                @elseif ($appointment->isCancelled())
+                                    {{-- Only cancellations and no-shows get this. A COMPLETED
+                                         booking is not "active" either, but it must never show
+                                         a one-tap "Put back in the diary": setStatus() runs
+                                         recomputeVisitStats(), so a stray tap would quietly
+                                         take that visit's money back off the customer's total
+                                         spend and roll back their last-visit date. Reopening a
+                                         finished booking is an Edit, and Edit is in the strip. --}}
+                                    <button type="button" wire:click="setStatus({{ $appointment->id }}, 'confirmed')"
+                                            class="{{ $act }}">Put back in the diary</button>
+                                @endif
+
+                                <button type="button" @click="actions = ! actions"
+                                        :aria-expanded="actions ? 'true' : 'false'"
+                                        aria-label="More actions for this booking"
+                                        class="inline-flex min-h-touch min-w-touch items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 11.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Expands in place rather than floating. A dropdown anchored to
+                             the last row of a long day opens off the bottom of the phone. --}}
+                        <div x-show="actions"
+                             x-collapse
+                             style="display: none"
+                             class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+
+                            <button type="button" wire:click="edit({{ $appointment->id }})" class="{{ $act }}">Edit</button>
+
+                            @if ($isActive)
+                                @if ($isPending)
+                                    <button type="button" wire:click="setStatus({{ $appointment->id }}, 'completed')"
+                                            class="{{ $act }}">Done</button>
+                                @endif
 
                                 <button type="button" wire:click="setStatus({{ $appointment->id }}, 'no_show')"
-                                        class="text-gray-500 hover:text-red-700">No-show</button>
+                                        class="{{ $act }}">Didn't turn up</button>
 
                                 <button type="button" wire:click="setStatus({{ $appointment->id }}, 'cancelled')"
                                         wire:confirm="Cancel this appointment?"
-                                        class="text-gray-500 hover:text-gray-900">Cancel</button>
-                            @else
-                                <button type="button" wire:click="setStatus({{ $appointment->id }}, 'confirmed')"
-                                        class="text-gray-500 hover:text-gray-900">Reopen</button>
+                                        class="{{ $act }}">Cancel</button>
                             @endif
 
                             <button type="button" wire:click="delete({{ $appointment->id }})"
                                     wire:confirm="Remove this appointment from the diary?"
-                                    class="text-gray-400 hover:text-red-600">Remove</button>
+                                    class="{{ $actDanger }}">Remove</button>
                         </div>
                     </li>
                 @empty
-                    <li class="px-4 py-12 text-center text-gray-500">
-                        {{ $isToday ? 'Nothing booked today.' : 'Nothing booked on this day.' }}
-                        <button type="button" wire:click="create"
-                                class="font-medium text-indigo-600 hover:text-indigo-900">Add a booking</button>
+                    <li class="px-4 py-12 text-center">
+                        <p class="text-gray-500">{{ $isToday ? 'Nothing booked today.' : 'Nothing booked on this day.' }}</p>
+                        <x-primary-button type="button" wire:click="create" class="mt-4">Add a booking</x-primary-button>
                     </li>
                 @endforelse
             </ul>
@@ -872,7 +942,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                 <x-input-label value="Customer" />
 
                 @if ($selectedCustomer)
-                    <div class="mt-1 flex items-center justify-between rounded-md bg-gray-50 px-3 py-2">
+                    <div class="mt-1 flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2">
                         <span class="text-sm">
                             <span class="font-medium text-gray-900">{{ $selectedCustomer->name }}</span>
                             @if ($selectedCustomer->phone)
@@ -881,7 +951,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                         </span>
 
                         <button type="button" wire:click="clearCustomer"
-                                class="text-sm font-medium text-indigo-600 hover:text-indigo-900">Change</button>
+                                class="-me-2 inline-flex min-h-touch shrink-0 items-center rounded-lg px-2 text-sm font-medium text-mulberry-700 hover:text-mulberry-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">Change</button>
                     </div>
                 @elseif ($addingCustomer)
                     <div class="mt-1 space-y-3 rounded-md border border-gray-200 p-3">
@@ -906,31 +976,54 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                         </p>
 
                         <button type="button" wire:click="cancelAddingCustomer"
-                                class="text-sm text-gray-500 hover:text-gray-900">Pick an existing customer instead</button>
+                                class="inline-flex min-h-touch items-center rounded-lg text-sm text-gray-600 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">Pick an existing customer instead</button>
                     </div>
                 @else
-                    <x-text-input wire:model.live.debounce.300ms="customerSearch" type="search"
+                    {{-- autofocus is what <x-form-modal> looks for when it opens. Picking
+                         the customer is always the first move on a new booking, so the
+                         keyboard should already be up by the time the sheet settles.
+                         On an edit there is no search box, so nothing takes focus and no
+                         keyboard appears — which is right, the details are already filled.
+
+                         keydown.enter.prevent is not a nicety, it is a bug fix. This box
+                         lives inside the modal's <form>, so a single text input plus a
+                         submit button means the browser implicitly submits on Enter — and
+                         on a phone the keyboard's blue key IS Enter. Typing a name and
+                         reaching for "search" was firing save() on a booking with no
+                         customer, no date and no time. Now it just puts the keyboard away
+                         so the results underneath are visible, which is what the key
+                         should have done in the first place. enterkeyhint labels it. --}}
+                    <x-text-input wire:model.live.debounce.300ms="customerSearch" type="search" autofocus
+                                  x-ref="customerSearch" enterkeyhint="search"
+                                  x-on:keydown.enter.prevent="$event.target.blur()"
                                   class="mt-1 block w-full" placeholder="Search by name, phone or email" />
 
                     <x-input-error :messages="$errors->get('customer_id')" class="mt-2" />
 
-                    <div class="mt-2 divide-y divide-gray-100 overflow-hidden rounded-md border border-gray-200">
+                    <div class="mt-2 divide-y divide-gray-100 overflow-hidden rounded-lg border border-gray-200">
                         @forelse ($customerResults as $result)
+                            {{-- Blur the search box, not the button: tapping the result makes
+                                 the search box vanish, and a focused element that disappears
+                                 leaves the keyboard up over the rest of the form. --}}
                             <button type="button" wire:key="result-{{ $result->id }}"
                                     wire:click="selectCustomer({{ $result->id }})"
-                                    class="block w-full px-3 py-2 text-start text-sm hover:bg-gray-50">
-                                <span class="font-medium text-gray-900">{{ $result->name }}</span>
-                                @if ($result->phone)
-                                    <span class="text-gray-500">· {{ \App\Support\Phone::forHumans($result->phone) }}</span>
-                                @endif
+                                    x-on:click="$refs.customerSearch?.blur()"
+                                    class="flex min-h-touch w-full items-center px-3 py-2 text-start text-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-mulberry-600">
+                                <span>
+                                    <span class="font-medium text-gray-900">{{ $result->name }}</span>
+                                    @if ($result->phone)
+                                        <span class="text-gray-500">· {{ \App\Support\Phone::forHumans($result->phone) }}</span>
+                                    @endif
+                                </span>
                             </button>
                         @empty
-                            <p class="px-3 py-2 text-sm text-gray-500">No customer found.</p>
+                            <p class="px-3 py-3 text-sm text-gray-500">No customer found.</p>
                         @endforelse
                     </div>
 
                     <button type="button" wire:click="startAddingCustomer"
-                            class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                            x-on:click="$refs.customerSearch?.blur()"
+                            class="mt-2 inline-flex min-h-touch items-center rounded-lg text-sm font-medium text-mulberry-700 hover:text-mulberry-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
                         + New customer
                     </button>
                 @endif
@@ -940,26 +1033,24 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <x-input-label for="service_id" value="Service" />
-                    <select wire:model.live="service_id" id="service_id"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <x-select-input wire:model.live="service_id" id="service_id" class="mt-1 block w-full">
                         <option value="">No service</option>
                         @foreach ($services as $service)
                             <option value="{{ $service->id }}">{{ $service->label() }}</option>
                         @endforeach
-                    </select>
+                    </x-select-input>
                     <p class="mt-1 text-xs text-gray-500">Fills in the duration and price.</p>
                     <x-input-error :messages="$errors->get('service_id')" class="mt-2" />
                 </div>
 
                 <div>
                     <x-input-label for="staff_member_id" value="Staff" />
-                    <select wire:model.live="staff_member_id" id="staff_member_id"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <x-select-input wire:model.live="staff_member_id" id="staff_member_id" class="mt-1 block w-full">
                         <option value="">Unassigned</option>
                         @foreach ($staff as $member)
                             <option value="{{ $member->id }}">{{ $member->name }}</option>
                         @endforeach
-                    </select>
+                    </x-select-input>
                     <p class="mt-1 text-xs text-gray-500">Needed to spot double-bookings.</p>
                     <x-input-error :messages="$errors->get('staff_member_id')" class="mt-2" />
                 </div>
@@ -995,15 +1086,26 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
             </div>
 
             {{-- Double-booking warning. Deliberately overridable: salons do overlap
-                 on purpose, and a wall here would just push them back to paper. --}}
+                 on purpose, and a wall here would just push them back to paper.
+
+                 It only appears after a save attempt, and it sits five fields up from
+                 the button that triggered it — on a phone that is off the top of the
+                 scrolling body, so tapping "Book it" used to look like nothing had
+                 happened at all. Scroll it into view and announce it. --}}
             @if ($conflict)
-                <div class="rounded-md border border-amber-300 bg-amber-50 p-3">
+                <div x-data="{
+                         init() {
+                             this.$nextTick(() => this.$el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+                         },
+                     }"
+                     role="alert"
+                     class="rounded-lg border border-amber-300 bg-amber-50 p-3">
                     <p class="text-sm font-medium text-amber-900">Double booking</p>
                     <p class="mt-1 text-sm text-amber-800">{{ $conflict }}</p>
 
-                    <label class="mt-2 flex items-center gap-2 text-sm text-amber-900">
+                    <label class="mt-1 flex min-h-touch items-center gap-2 text-sm font-medium text-amber-900">
                         <input type="checkbox" wire:model="allowOverlap"
-                               class="rounded border-amber-400 text-amber-600 focus:ring-amber-500">
+                               class="h-5 w-5 rounded border-amber-400 text-amber-600 focus:ring-amber-500">
                         Book it anyway
                     </label>
                 </div>
@@ -1013,12 +1115,11 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                     <x-input-label for="status" value="Status" />
-                    <select wire:model="status" id="status"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <x-select-input wire:model="status" id="status" class="mt-1 block w-full">
                         @foreach ($statusOptions as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
-                    </select>
+                    </x-select-input>
                     <x-input-error :messages="$errors->get('status')" class="mt-2" />
                 </div>
 

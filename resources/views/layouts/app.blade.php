@@ -9,12 +9,16 @@
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
+        <a href="#content" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-lg focus:bg-mulberry-700 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white">
+            Skip to content
+        </a>
+
         <div class="min-h-screen bg-gray-100">
             <livewire:layout.navigation />
 
@@ -27,8 +31,13 @@
                 </header>
             @endif
 
-            <!-- Page Content -->
-            <main>
+            {{--
+                pb-20 clears the phone tab bar, which is fixed to the bottom of the
+                viewport. Without it the last row of every list sits underneath it and
+                cannot be tapped — and the last row of the diary is the one booking you
+                were scrolling to reach.
+            --}}
+            <main id="content" class="pb-20 sm:pb-0">
                 {{ $slot }}
             </main>
         </div>

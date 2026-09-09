@@ -8,7 +8,7 @@
         <title>{{ config('app.name') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap" rel="stylesheet" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -24,7 +24,7 @@
                 <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
 
                     <span class="flex items-center gap-2 font-semibold">
-                        <span class="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
+                        <span class="grid h-8 w-8 place-items-center rounded-lg bg-mulberry-700 text-sm font-bold text-white">
                             {{ substr(config('app.name'), 0, 1) }}
                         </span>
                         {{ config('app.name') }}
@@ -58,7 +58,7 @@
             <main class="flex-1">
                 <div class="mx-auto max-w-5xl px-6 py-16 sm:py-24">
 
-                    <p class="text-sm font-medium uppercase tracking-wider text-indigo-600">
+                    <p class="text-sm font-medium uppercase tracking-wider text-mulberry-700">
                         For UK salons, barbers &amp; local service businesses
                     </p>
 
@@ -74,13 +74,13 @@
                     <div class="mt-8 flex flex-wrap items-center gap-3">
                         @auth
                             <a href="{{ route('dashboard') }}"
-                               class="rounded-md bg-indigo-600 px-6 py-3 font-medium text-white shadow-sm hover:bg-indigo-500">
+                               class="rounded-md bg-mulberry-700 px-6 py-3 font-medium text-white shadow-sm hover:bg-mulberry-600">
                                 Open your dashboard
                             </a>
                         @else
                             @if (Route::has('register'))
                                 <a href="{{ route('register') }}"
-                                   class="rounded-md bg-indigo-600 px-6 py-3 font-medium text-white shadow-sm hover:bg-indigo-500">
+                                   class="rounded-md bg-mulberry-700 px-6 py-3 font-medium text-white shadow-sm hover:bg-mulberry-600">
                                     Start your 14-day free trial
                                 </a>
                             @endif
