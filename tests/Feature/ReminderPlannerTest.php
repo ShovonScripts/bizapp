@@ -412,6 +412,230 @@ class ReminderPlannerTest extends TestCase
         $this->assertCount(1, $this->messages());
     }
 
+    /* --------------------- Reviving a skipped reminder -------------------- */
+
+    /**
+     * The defect this whole section exists for.
+     *
+     * A skipped row is not a verdict, it is a note saying "I could not send this
+     * yet, and here is why". The owner reads that note, adds the missing detail,
+     * and reasonably expects the reminder to go out. Until this was fixed the
+     * planner treated the note as the decision: the appointment counted as
+     * already-planned for ever, and nothing short of deleting the row by hand
+     * would revive it. The customer simply never heard from them.
+     *
+     * Found by reading the planner during the first live walkthrough rather than
+     * by a failing test — which is why it gets six of them now.
+     */
+    public function test_a_skipped_reminder_is_revived_once_the_customer_can_be_reached(): void
+    {
+        $tom = Customer::factory()->forBusiness($this->salon)->create([
+            'name' => 'Tom Reilly',
+            'preferred_channel' => 'telegram',
+            'telegram_chat_id' => null,
+        ]);
+
+        $this->bookingAt('2026-07-16 14:00', [], $tom);
+
+        $this->plan();
+
+        $skipped = $this->messages()->sole();
+        $this->assertSame(ScheduledMessage::SKIPPED, $skipped->status);
+
+        // The owner does exactly what the queue told them to do.
+        $tom->forceFill(['telegram_chat_id' => '123456789'])->save();
+
+        $tally = $this->plan();
+
+        $this->assertSame(1, $tally['queued']);
+        $this->assertSame(0, $tally['skipped']);
+
+        // sole() is half the assertion here: one row, not a second alongside it.
+        $revived = $this->messages()->sole();
+
+        $this->assertSame(
+            $skipped->id,
+            $revived->id,
+            'The existing row should have been revived in place, not replaced.'
+        );
+        $this->assertSame(ScheduledMessage::PENDING, $revived->status);
+        $this->assertNull($revived->error, 'The stale reason must not survive the revival.');
+        $this->assertSame($this->utc('2026-07-15 14:00'), $revived->send_at->toDateTimeString());
+    }
+
+    /**
+     * Why the fix could not simply be "stop treating skipped as planned".
+     *
+     * The planner runs every five minutes across a twelve hour horizon. A customer
+     * who stays unreachable would collect around a hundred and forty identical
+     * skipped rows, turning the one screen that is supposed to explain the problem
+     * into the thing that buries it.
+     */
+    public function test_an_unreachable_customer_does_not_accumulate_a_row_every_run(): void
+    {
+        $tom = Customer::factory()->forBusiness($this->salon)->create([
+            'preferred_channel' => 'telegram',
+            'telegram_chat_id' => null,
+        ]);
+
+        $this->bookingAt('2026-07-16 14:00', [], $tom);
+
+        $this->plan();
+        $this->plan();
+        $tally = $this->plan();
+
+        $this->assertCount(1, $this->messages());
+        $this->assertSame(ScheduledMessage::SKIPPED, $this->messages()->sole()->status);
+        $this->assertSame(1, $tally['skipped']);
+        $this->assertSame(0, $tally['queued']);
+    }
+
+    /**
+     * A revived row is re-rendered, never merely re-flagged.
+     *
+     * The body is written at plan time, so a row skipped while the booking was at
+     * two o'clock still says two o'clock. The observer that voids reminders on a
+     * reschedule only touches PENDING rows, so a skipped one survives the move
+     * untouched — flipping its status without rebuilding it would tell the
+     * customer to turn up at the wrong time.
+     */
+    public function test_a_revived_reminder_carries_the_bookings_current_time(): void
+    {
+        $tom = Customer::factory()->forBusiness($this->salon)->create([
+            'preferred_channel' => 'telegram',
+            'telegram_chat_id' => null,
+        ]);
+
+        $appointment = $this->bookingAt('2026-07-16 14:00', [], $tom);
+        $this->plan();
+
+        $this->assertStringContainsString('2:00pm', $this->messages()->sole()->body());
+
+        $appointment->update([
+            'starts_at' => Carbon::parse('2026-07-16 16:00', 'Europe/London')->utc(),
+            'ends_at' => Carbon::parse('2026-07-16 16:30', 'Europe/London')->utc(),
+        ]);
+
+        $tom->forceFill(['telegram_chat_id' => '123456789'])->save();
+
+        $this->plan();
+
+        $revived = $this->messages()->sole();
+
+        $this->assertStringContainsString('4:00pm', $revived->body());
+        $this->assertStringNotContainsString('2:00pm', $revived->body());
+        $this->assertSame($this->utc('2026-07-15 16:00'), $revived->send_at->toDateTimeString());
+    }
+
+    /**
+     * The reason stays current too, even while it stays unsendable.
+     *
+     * The queue is the owner's answer to "why hasn't this gone out?", so a row
+     * still showing last week's obstacle sends them off to fix the wrong thing.
+     */
+    public function test_a_skipped_row_keeps_its_reason_up_to_date(): void
+    {
+        $tom = Customer::factory()->forBusiness($this->salon)->create([
+            'preferred_channel' => 'telegram',
+            'telegram_chat_id' => null,
+        ]);
+
+        $this->bookingAt('2026-07-16 14:00', [], $tom);
+        $this->plan();
+
+        $this->assertSame('Telegram not linked yet.', $this->messages()->sole()->error);
+
+        // unreachableReason() checks unsubscribed first, so the sentence changes
+        // even though the missing chat id is still missing.
+        $tom->unsubscribe();
+
+        $this->plan();
+
+        $message = $this->messages()->sole();
+
+        $this->assertSame(ScheduledMessage::SKIPPED, $message->status);
+        $this->assertSame('Asked us to stop.', $message->error);
+    }
+
+    /**
+     * Failed is deliberately NOT revived, and this test is the record of that.
+     *
+     * Skipped means we never tried. Failed means we did, and the driver told us
+     * why not — usually something permanent, like a customer who has blocked the
+     * bot. Reviving those automatically would hammer the provider with a request
+     * guaranteed to fail, every five minutes, for as long as the booking sits in
+     * the window. Retrying transient failures is the dispatcher's job and it
+     * already has a backoff for it; clearing a genuinely failed row is a
+     * deliberate act by whoever fixed the underlying problem.
+     */
+    public function test_a_failed_reminder_is_not_revived_automatically(): void
+    {
+        $this->bookingAt('2026-07-16 14:00');
+        $this->plan();
+
+        $this->messages()->sole()->forceFill([
+            'status' => ScheduledMessage::FAILED,
+            'attempts' => 3,
+            'error' => 'This customer has blocked the bot on Telegram.',
+        ])->save();
+
+        $tally = $this->plan();
+
+        $this->assertCount(1, $this->messages());
+        $this->assertSame(ScheduledMessage::FAILED, $this->messages()->sole()->status);
+        $this->assertSame(0, $tally['queued']);
+        $this->assertSame(1, $tally['already_planned']);
+    }
+
+    /** Loosening the dedupe rule must not open the door to double-messaging. */
+    public function test_a_sent_reminder_is_never_planned_again(): void
+    {
+        $this->bookingAt('2026-07-16 14:00');
+        $this->plan();
+
+        $this->messages()->sole()->markSent('tg-1');
+
+        $tally = $this->plan();
+
+        $this->assertCount(1, $this->messages());
+        $this->assertSame(ScheduledMessage::SENT, $this->messages()->sole()->status);
+        $this->assertSame(1, $tally['already_planned']);
+    }
+
+    /**
+     * A revived row is a fresh attempt, so the delivery bookkeeping starts over.
+     *
+     * Leaving `attempts` behind would have the dispatcher reading a retry history
+     * belonging to a message it never actually sent, and could exhaust
+     * max_attempts before the first real try.
+     */
+    public function test_reviving_clears_the_delivery_bookkeeping(): void
+    {
+        $tom = Customer::factory()->forBusiness($this->salon)->create([
+            'preferred_channel' => 'telegram',
+            'telegram_chat_id' => null,
+        ]);
+
+        $this->bookingAt('2026-07-16 14:00', [], $tom);
+        $this->plan();
+
+        $this->messages()->sole()->forceFill([
+            'attempts' => 2,
+            'sent_at' => now()->subDay(),
+        ])->save();
+
+        $tom->forceFill(['telegram_chat_id' => '123456789'])->save();
+
+        $this->plan();
+
+        $revived = $this->messages()->sole();
+
+        $this->assertSame(ScheduledMessage::PENDING, $revived->status);
+        $this->assertSame(0, $revived->attempts);
+        $this->assertNull($revived->sent_at);
+        $this->assertNull($revived->error);
+    }
+
     /* --------------------------- Tenant safety --------------------------- */
 
     /**

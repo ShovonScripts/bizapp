@@ -26,6 +26,14 @@ use Illuminate\Support\Collection;
  * later, when the dashboard only shows what is true today. A `skipped` row with a
  * sentence in it answers that; silence does not. The one exception is the
  * too-close-to-bother case below, which is a non-event rather than a failure.
+ *
+ * ─── A skipped row is a note, not a verdict ─────────────────────────────────
+ * The owner reads "Telegram not linked yet", goes and links the customer, and
+ * reasonably expects the reminder to go out. So every run re-examines its own
+ * skipped rows and rewrites them where they stand: revived to `pending` once the
+ * obstacle is gone, or left skipped with a freshly worded reason if it is not.
+ * Updating in place rather than inserting is what stops one unreachable customer
+ * collecting an identical row per run across a twelve hour horizon.
  */
 class ReminderPlanner
 {
@@ -97,7 +105,11 @@ class ReminderPlanner
             return $this->summary();
         }
 
+        // Two lookups, two queries, both outside the loop. Between them they answer
+        // "leave this appointment alone" and "rewrite this row rather than adding
+        // one" for every appointment in the window at once.
         $planned = $this->alreadyPlanned($appointments);
+        $revivable = $this->revivableSkipped($appointments);
 
         $tally = $this->summary();
 
@@ -162,7 +174,17 @@ class ReminderPlanner
                     $reason = $channelChecked[$channel];
                 }
 
-                $this->write($business, $appointment, $customer, $channel, $sendAt, $reason);
+                $this->write(
+                    $business,
+                    $appointment,
+                    $customer,
+                    $channel,
+                    $sendAt,
+                    $reason,
+                    // Null on a first-time plan; the appointment's existing skipped row
+                    // when this run is re-examining a note it left earlier.
+                    $revivable->get($appointment->id),
+                );
 
                 $reason === null ? $tally['queued']++ : $tally['skipped']++;
             }
@@ -215,6 +237,17 @@ class ReminderPlanner
         return $sendAt;
     }
 
+    /**
+     * Create the outbox row — or bring the appointment's existing skipped row back
+     * up to date, which is the same job a later run in the same day is doing.
+     *
+     * Everything is rewritten on a revival, not just the status. The body was
+     * rendered from the booking as it stood when we skipped it, and the observer
+     * that voids reminders on a reschedule only touches PENDING rows — so a skipped
+     * row can be sitting there quoting a time the customer is no longer booked for.
+     * Flipping its status without rebuilding it would send them to the salon at the
+     * wrong hour.
+     */
     protected function write(
         Business $business,
         Appointment $appointment,
@@ -222,10 +255,11 @@ class ReminderPlanner
         string $channel,
         Carbon $sendAt,
         ?string $skipReason,
+        ?ScheduledMessage $existing = null,
     ): void {
         $variables = $this->variables($business, $appointment, $customer);
 
-        ScheduledMessage::create([
+        $attributes = [
             // Set explicitly. BelongsToBusiness only fills business_id from the
             // current tenant, and in a scheduled run there isn't one — every row
             // would land with a null business_id and become invisible to its owner.
@@ -244,7 +278,27 @@ class ReminderPlanner
             'error' => $skipReason,
             'related_type' => $appointment->getMorphClass(),
             'related_id' => $appointment->id,
-        ]);
+        ];
+
+        if ($existing === null) {
+            ScheduledMessage::create($attributes);
+
+            return;
+        }
+
+        /*
+         * attempts and sent_at are reset because a revived row is a first attempt, not
+         * the continuation of one. Leaving a count behind would have the dispatcher
+         * reading a retry history belonging to a send that never happened, and could
+         * burn through max_attempts before the first real try.
+         *
+         * forceFill rather than update(): every column is being rebuilt here, and a
+         * later change to $fillable should not be able to silently drop one.
+         */
+        $existing->forceFill($attributes + [
+            'attempts' => 0,
+            'sent_at' => null,
+        ])->save();
     }
 
     /**
@@ -276,20 +330,30 @@ class ReminderPlanner
     }
 
     /**
-     * Appointment ids that already have a 24h reminder on record.
+     * Appointment ids whose reminder is settled — leave these completely alone.
      *
      * ─── The dedupe rule, in one place ──────────────────────────────────────
-     * Any status EXCEPT cancelled blocks a new row.
+     * A `pending`, `sent` or `failed` row blocks: this appointment has had its one
+     * reminder, or has one waiting to go out, and planning again would double-
+     * message the customer.
      *
-     *   sent / failed / skipped  — this appointment has had its one reminder, or
-     *                              its one decision not to send. Planning again
-     *                              would either double-message the customer or
-     *                              add an identical skipped row every five
-     *                              minutes for the next twelve hours.
-     *   cancelled                — the appointment moved, so the old message was
-     *                              voided and a fresh one SHOULD be planned for
-     *                              the new time. This is the whole reason the
-     *                              observer cancels rather than deletes.
+     * `cancelled` does not block. The appointment moved, the old message was voided
+     * and a fresh one SHOULD be planned for the new time — the whole reason the
+     * observer cancels rather than deletes.
+     *
+     * `skipped` does not block either, and does not produce a second row:
+     * revivableSkipped() hands the existing row to write(), which rewrites it where
+     * it stands. So the appointment is reconsidered on every run without the queue
+     * filling up with copies of the same note.
+     *
+     * `failed` sitting on the blocking side is a decision, not an oversight.
+     * Skipped means we never tried; failed means we did, and the driver told us why
+     * not — usually something permanent, like a customer who has blocked the bot.
+     * Reviving those automatically would fire a doomed request at the provider
+     * every five minutes for as long as the booking sits in the window. Retrying
+     * the transient ones is the dispatcher's job and it already has a backoff for
+     * it; clearing a genuinely failed row is a deliberate act by whoever fixed the
+     * underlying problem.
      *
      * This cannot be a unique index. MySQL has no partial one, and a plain unique
      * index would also block the legitimate repeats other templates will need
@@ -304,12 +368,44 @@ class ReminderPlanner
             ->where('related_type', (new Appointment)->getMorphClass())
             ->whereIn('related_id', $appointments->pluck('id'))
             ->where('template_key', ScheduledMessage::REMINDER_24H)
-            ->where('status', '!=', ScheduledMessage::CANCELLED)
+            ->whereNotIn('status', [ScheduledMessage::CANCELLED, ScheduledMessage::SKIPPED])
             ->pluck('related_id')
             // Cast because related_id is an unsignedBigInteger with no model cast
             // behind it, and PDO hands back strings on MySQL but ints on SQLite.
             // The tests would pass and production would re-plan every reminder.
             ->map(fn ($id) => (int) $id);
+    }
+
+    /**
+     * The skipped rows this run may rewrite, keyed by appointment id.
+     *
+     * One query for the whole window rather than a lookup per appointment: a salon
+     * coming back from an outage can have hundreds of these at once, and the
+     * planner runs every five minutes all day.
+     *
+     * A row only reaches write() through here if alreadyPlanned() did not claim the
+     * appointment first, so a skipped row sitting beside a sent or failed one is
+     * never consulted. Settled beats unsettled, and that ordering is what keeps a
+     * customer from being messaged twice.
+     *
+     * @param  Collection<int, Appointment>  $appointments
+     * @return Collection<int, ScheduledMessage>
+     */
+    protected function revivableSkipped(Collection $appointments): Collection
+    {
+        return ScheduledMessage::query()
+            ->where('related_type', (new Appointment)->getMorphClass())
+            ->whereIn('related_id', $appointments->pluck('id'))
+            ->where('template_key', ScheduledMessage::REMINDER_24H)
+            ->where('status', ScheduledMessage::SKIPPED)
+            // Oldest first so keyBy() leaves the newest one in place. Nothing writes
+            // two skipped rows for one appointment now, but rows created before this
+            // method existed can already be sitting in the table.
+            ->orderBy('id')
+            ->get()
+            // Same string/int split as above, and it matters more here: the key is
+            // looked up with an appointment id, not compared loosely.
+            ->keyBy(fn (ScheduledMessage $message) => (int) $message->related_id);
     }
 
     protected function summary(): array

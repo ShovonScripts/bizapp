@@ -9,8 +9,12 @@ use Illuminate\Console\Command;
  * Works out which reminders are coming due and writes them to the outbox.
  *
  * Runs every five minutes from the scheduler. Deliberately cheap and idempotent:
- * running it twice in a row produces nothing the second time, which matters
- * because the first thing anyone does when debugging is run it again by hand.
+ * running it twice in a row adds no rows the second time, which matters because
+ * the first thing anyone does when debugging is run it again by hand.
+ *
+ * Idempotent is not the same as inert. A later run re-examines the skipped rows
+ * an earlier one wrote and brings them up to date, so a reminder skipped this
+ * morning goes out this afternoon once the owner has filled in what was missing.
  */
 class PlanMessages extends Command
 {

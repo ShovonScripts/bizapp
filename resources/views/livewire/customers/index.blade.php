@@ -121,6 +121,21 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
         $this->resetPage();
     }
 
+    /**
+     * Empties BOTH the search box and the channel filter.
+     *
+     * Written as a method rather than inline in wire:click because Livewire evaluates
+     * that attribute as "$wire." . $expression -- a single textual prepend. Only the
+     * first statement gets the prefix, so a second one like $refresh() is evaluated
+     * bare by Alpine, where no such magic exists, and throws in the console.
+     */
+    public function clearFilters(): void
+    {
+        $this->search = '';
+        $this->filter = 'all';
+        $this->resetPage();
+    }
+
     public function create(): void
     {
         $this->resetForm();
@@ -400,6 +415,9 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                 <div class="px-4 py-12 text-center">
                     @if ($search !== '' || $filter !== 'all')
                         <p class="text-gray-500">No customers match that.</p>
+                        <button type="button" wire:click="clearFilters" class="mt-3 inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                            Clear filters
+                        </button>
                     @else
                         <p class="text-gray-500">No customers yet.</p>
                         <p class="mt-1 text-sm text-gray-500">Add the people you see regularly and the reminders take care of themselves.</p>
@@ -423,18 +441,22 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                 @foreach ($customers as $customer)
                     <li wire:key="customer-card-{{ $customer->id }}" x-data="{ actions: false }" class="p-4">
                         <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
+                            <div class="min-w-0 flex-1">
                                 <div class="font-medium text-gray-900">{{ $customer->name }}</div>
+
+                                @if ($customer->email)
+                                    <div class="mt-0.5 text-sm text-gray-500">{{ $customer->email }}</div>
+                                @endif
 
                                 @if ($customer->phone)
                                     {{-- tel: because on a phone the answer to "who is this?" is
                                          usually "ring them". --}}
                                     <a href="tel:{{ $customer->phone }}"
-                                       class="inline-flex min-h-touch items-center rounded-lg text-sm font-medium text-mulberry-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                       class="mt-1 inline-flex min-h-touch items-center rounded-lg text-sm font-medium text-mulberry-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
                                         {{ \App\Support\Phone::forHumans($customer->phone) }}
                                     </a>
                                 @else
-                                    <p class="mt-0.5 text-sm text-gray-500">No phone number — cannot be reminded</p>
+                                    <p class="mt-1 text-sm text-gray-500">No phone number — cannot be reminded</p>
                                 @endif
                             </div>
 
@@ -448,7 +470,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                             </button>
                         </div>
 
-                        <div class="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm text-gray-500">
+                        <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
                             <span>
                                 Last visit
                                 <span class="font-medium text-gray-900">
@@ -465,22 +487,21 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                 @if ($customer->preferred_channel === 'none')
                                     <span class="font-medium text-gray-900">No messages</span>
                                 @else
-                                    Messages by
                                     <span class="font-medium text-gray-900">{{ \App\Support\Channel::label($customer->preferred_channel) }}</span>
                                 @endif
                             </span>
                         </div>
 
                         @if ($customer->unsubscribed_at || $customer->marketing_consent || $customer->telegramLinked())
-                            <div class="mt-2 flex flex-wrap gap-1">
+                            <div class="mt-2 flex flex-wrap gap-1.5">
                                 @if ($customer->unsubscribed_at)
-                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">Unsubscribed</span>
+                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700 ring-1 ring-red-600/10">Unsubscribed</span>
                                 @elseif ($customer->marketing_consent)
-                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-green-50 text-green-700">Marketing OK</span>
+                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-green-50 text-green-700 ring-1 ring-green-600/10">Marketing OK</span>
                                 @endif
 
                                 @if ($customer->telegramLinked())
-                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-sky-50 text-sky-700">Telegram</span>
+                                    <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-sky-50 text-sky-700 ring-1 ring-sky-600/10">Telegram</span>
                                 @endif
                             </div>
                         @endif
@@ -515,9 +536,9 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody class="divide-y divide-gray-100 bg-white">
                         @foreach ($customers as $customer)
-                            <tr wire:key="customer-row-{{ $customer->id }}" class="hover:bg-gray-50">
+                            <tr wire:key="customer-row-{{ $customer->id }}" class="hover:bg-gray-50 transition-colors">
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-gray-900">{{ $customer->name }}</div>
 
@@ -527,19 +548,17 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                                     <div class="mt-1 flex flex-wrap gap-1">
                                         @if ($customer->unsubscribed_at)
-                                            {{-- Shown loudly on purpose: this is the one flag
-                                                 staff must never quietly clear. --}}
-                                            <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">
+                                            <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700 ring-1 ring-red-600/10">
                                                 Unsubscribed
                                             </span>
                                         @elseif ($customer->marketing_consent)
-                                            <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-green-50 text-green-700">
+                                            <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-green-50 text-green-700 ring-1 ring-green-600/10">
                                                 Marketing OK
                                             </span>
                                         @endif
 
                                         @if ($customer->telegramLinked())
-                                            <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-sky-50 text-sky-700">
+                                            <span class="inline-flex rounded px-1.5 py-0.5 text-xs font-medium bg-sky-50 text-sky-700 ring-1 ring-sky-600/10">
                                                 Telegram
                                             </span>
                                         @endif
@@ -566,19 +585,22 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
                                     @if (! $customer->telegramLinked() && $customer->preferred_channel !== 'none')
-                                        {{-- Hidden once they are linked, and for anyone who has
-                                             asked for no messages at all: sending them an invite
-                                             would be asking a question they already answered. --}}
                                         <button type="button" wire:click="telegramLink({{ $customer->id }})"
-                                                class="me-3 rounded font-medium text-sky-700 hover:text-sky-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">Invite</button>
+                                                class="me-3 rounded-md px-2.5 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">
+                                            Invite
+                                        </button>
                                     @endif
 
                                     <button type="button" wire:click="edit({{ $customer->id }})"
-                                            class="rounded font-medium text-mulberry-700 hover:text-mulberry-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">Edit</button>
+                                            class="me-3 rounded-md px-2.5 py-1.5 text-sm font-medium text-mulberry-700 hover:bg-mulberry-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                        Edit
+                                    </button>
 
                                     <button type="button" wire:click="delete({{ $customer->id }})"
                                             wire:confirm="Remove {{ $customer->name }}? Their appointment history is kept."
-                                            class="ms-3 rounded text-gray-500 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600">Remove</button>
+                                            class="rounded-md px-2.5 py-1.5 text-sm font-medium text-gray-500 hover:text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600">
+                                        Remove
+                                    </button>
                                 </td>
                             </tr>
                         @endforeach
