@@ -666,7 +666,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
 <div x-data="{ toast: null }"
      x-on:toast.window="toast = $event.detail.message; setTimeout(() => toast = null, 3000)">
 
-    <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8 space-y-4">
+    <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
         {{-- ---------------------------------------------------------------
              Heading
@@ -1120,6 +1120,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </x-select-input>
+                    <p class="mt-1 text-xs text-gray-500">Pending = reminder will be sent. Confirmed = same. Completed/Cancelled/No-show = no reminder.</p>
                     <x-input-error :messages="$errors->get('status')" class="mt-2" />
                 </div>
 

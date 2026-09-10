@@ -159,7 +159,7 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
 <div x-data="{ toast: null }"
      x-on:toast.window="toast = $event.detail.message; setTimeout(() => toast = null, 2500)">
 
-    <div class="py-8 max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-4">
+    <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
         <div class="flex items-center justify-between px-4 sm:px-0">
             <div>
@@ -326,12 +326,14 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                 <x-input-label for="name" value="Name" />
                 <x-text-input wire:model="name" id="name" type="text" class="mt-1 block w-full"
                               placeholder="Ladies Cut &amp; Blow Dry" autofocus />
+                <p class="mt-1 text-xs text-gray-500">Shown on the booking form and in receipts.</p>
                 <x-input-error :messages="$errors->get('name')" class="mt-2" />
             </div>
 
             <div>
                 <x-input-label for="description" value="Description" />
                 <x-text-input wire:model="description" id="description" type="text" class="mt-1 block w-full" />
+                <p class="mt-1 text-xs text-gray-500">Optional. Appears on the booking confirmation.</p>
                 <x-input-error :messages="$errors->get('description')" class="mt-2" />
             </div>
 
@@ -348,6 +350,7 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                     <x-input-label for="price" value="Price (£)" />
                     <x-text-input wire:model="price" id="price" type="number"
                                   min="0" step="0.01" class="mt-1 block w-full" />
+                    <p class="mt-1 text-xs text-gray-500">Price per session. Saved with the booking so future price changes don't alter history.</p>
                     <x-input-error :messages="$errors->get('price')" class="mt-2" />
                 </div>
 

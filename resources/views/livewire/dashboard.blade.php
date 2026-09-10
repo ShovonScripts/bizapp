@@ -132,7 +132,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
 }; ?>
 
 <div>
-    <div class="py-8 max-w-6xl mx-auto sm:px-6 lg:px-8 space-y-4">
+    <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
         @if ($business === null)
 
@@ -340,7 +340,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                      never becomes a banner an owner learns to skip past. --}}
                 @if (count($attention) > 0)
                     <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                        <p class="text-sm font-medium text-amber-900">Worth a look</p>
+                        <p class="text-sm font-medium text-amber-900">Needs action</p>
 
                         <ul class="mt-2 space-y-1.5">
                             @foreach ($attention as $item)
@@ -349,7 +349,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                     <span>{{ $item['text'] }}</span>
                                     <a href="{{ route($item['route'], $item['params']) }}" wire:navigate
                                        class="font-medium text-amber-900 underline hover:no-underline">
-                                        {{ $item['action'] }}
+                                         {{ $item['action'] }}
                                     </a>
                                 </li>
                             @endforeach

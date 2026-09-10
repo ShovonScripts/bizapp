@@ -644,6 +644,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                 <div>
                     <x-input-label for="email" value="Email" />
                     <x-text-input wire:model="email" id="email" type="email" class="mt-1 block w-full" />
+                    <p class="mt-1 text-xs text-gray-500">Optional. Used for email reminders only.</p>
                     <x-input-error :messages="$errors->get('email')" class="mt-2" />
                 </div>
 
@@ -654,6 +655,10 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                             <option value="{{ $channel }}">{{ \App\Support\Channel::label($channel) }}</option>
                         @endforeach
                     </x-select-input>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Telegram = free reminders. WhatsApp = requires Meta business setup. SMS = paid per message.
+                        Choose none to silence all reminders for this customer.
+                    </p>
                     <x-input-error :messages="$errors->get('preferred_channel')" class="mt-2" />
                 </div>
 
@@ -661,6 +666,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                     <x-input-label for="notes" value="Notes" />
                     <textarea wire:model="notes" id="notes" rows="2"
                               class="mt-1 block w-full rounded-lg border-gray-300 text-base shadow-sm focus:border-mulberry-600 focus:ring-mulberry-600 sm:text-sm"></textarea>
+                    <p class="mt-1 text-xs text-gray-500">Private staff notes — not sent to the customer.</p>
                     <x-input-error :messages="$errors->get('notes')" class="mt-2" />
                 </div>
 
