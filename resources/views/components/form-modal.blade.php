@@ -88,7 +88,7 @@
 
         <div class="flex shrink-0 justify-end gap-3 border-t border-gray-200 bg-gray-50 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <x-secondary-button type="button" wire:click="$set('showForm', false)" x-on:click="dropKeyboard()">Cancel</x-secondary-button>
-            <x-primary-button>{{ $submitLabel }}</x-primary-button>
+            <x-primary-button wire:loading.attr="disabled" wire:target="save">{{ $submitLabel }}</x-primary-button>
         </div>
     </form>
 </div>

@@ -212,7 +212,7 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
 <div x-data="{ toast: null }"
      x-on:toast.window="toast = $event.detail.message; setTimeout(() => toast = null, 2500)">
 
-    <div class="py-8 max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-4">
+    <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
         <div class="flex items-center justify-between px-4 sm:px-0">
             <div>
@@ -394,6 +394,7 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
                 <x-input-label for="name" value="Name" />
                 <x-text-input wire:model="name" id="name" type="text" class="mt-1 block w-full"
                               placeholder="Jade Thompson" autofocus />
+                <p class="mt-1 text-xs text-gray-500">Shown on the diary and in booking confirmations.</p>
                 <x-input-error :messages="$errors->get('name')" class="mt-2" />
             </div>
 
@@ -402,6 +403,7 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
                     <x-input-label for="phone" value="Phone (optional)" />
                     <x-text-input wire:model="phone" id="phone" type="tel" class="mt-1 block w-full"
                                   placeholder="07700 900123" />
+                    <p class="mt-1 text-xs text-gray-500">Used for SMS reminders. Leave blank if they don't take bookings directly.</p>
                     <x-input-error :messages="$errors->get('phone')" class="mt-2" />
                 </div>
 
@@ -416,6 +418,7 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
 
             <div>
                 <x-input-label value="Calendar colour" />
+                <p class="mt-1 text-xs text-gray-500">Shown on the diary so you can tell staff apart at a glance.</p>
 
                 <div class="mt-2 flex flex-wrap gap-2">
                     @foreach ($colors as $hex => $label)
