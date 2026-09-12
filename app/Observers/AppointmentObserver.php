@@ -28,6 +28,13 @@ use App\Models\ScheduledMessage;
  */
 class AppointmentObserver
 {
+    public function creating(Appointment $appointment): void
+    {
+        if (blank($appointment->cancellation_token)) {
+            $appointment->cancellation_token = \Illuminate\Support\Str::random(64);
+        }
+    }
+
     public function updated(Appointment $appointment): void
     {
         // A booking that moved needs a new reminder with the new time in it, not

@@ -59,9 +59,16 @@ class Appointment extends Model
         'ends_at',
         'status',
         'price',
+        'deposit_required',
+        'deposit_amount',
+        'deposit_status',
+        'paid_amount',
+        'stripe_payment_intent_id',
+        'stripe_session_id',
         'notes',
         'source',
         'reminded_at',
+        'cancellation_token',
     ];
 
     protected $casts = [
@@ -69,7 +76,28 @@ class Appointment extends Model
         'ends_at' => 'datetime',
         'reminded_at' => 'datetime',
         'price' => 'decimal:2',
+        'deposit_required' => 'boolean',
+        'deposit_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
     ];
+
+    public function balanceDue(): float
+    {
+        $price = (float) $this->price;
+        $paid = (float) $this->paid_amount;
+
+        return max(0.0, round($price - $paid, 2));
+    }
+
+    public function isFullyPaid(): bool
+    {
+        return $this->balanceDue() <= 0.00;
+    }
+
+    public function hasPaidDeposit(): bool
+    {
+        return $this->deposit_status === 'paid' || $this->paid_amount > 0;
+    }
 
     /* ----------------------------- Relations ----------------------------- */
 

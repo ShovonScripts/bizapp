@@ -1,10 +1,28 @@
 <?php
 
 use App\Http\Controllers\TelegramWebhookController;
+use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::view('/', 'welcome');
+
+Route::view('pricing', 'pricing')->name('pricing');
+Route::view('privacy', 'privacy')->name('privacy');
+Route::view('terms', 'terms')->name('terms');
+
+/*
+| Public client self-booking portal: /book/{slug}
+| Accessible to any customer without authentication. Tenant scoping is
+| resolved strictly inside the component using the unique business slug.
+*/
+Volt::route('book/{slug}', 'booking.public')->name('booking.public');
+
+/*
+| Public customer cancellation: /book/{slug}/cancel/{token}
+| Allows a customer to cancel their appointment without logging in.
+*/
+Volt::route('book/{slug}/cancel/{token}', 'booking.cancel')->name('booking.cancel');
 
 /*
 | The dashboard sits outside the tenant group below on purpose.
@@ -40,6 +58,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('customers', 'customers.index')->name('customers.index');
     Volt::route('services', 'services.index')->name('services.index');
     Volt::route('staff', 'staff.index')->name('staff.index');
+    Volt::route('settings', 'settings.index')->name('settings.index');
 });
 
 require __DIR__.'/auth.php';
@@ -61,6 +80,43 @@ require __DIR__.'/auth.php';
 
 Route::post('telegram/webhook', TelegramWebhookController::class)
     ->name('telegram.webhook');
+
+Route::match(['get', 'post'], 'whatsapp/webhook', WhatsAppWebhookController::class)
+    ->name('whatsapp.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| Stripe Deposit Payments
+|--------------------------------------------------------------------------
+*/
+use App\Http\Controllers\StripePaymentController;
+
+Route::get('booking/{appointment}/payment-success', [StripePaymentController::class, 'success'])
+    ->name('stripe.payment.success');
+
+Route::get('booking/{appointment}/payment-cancel', [StripePaymentController::class, 'cancel'])
+    ->name('stripe.payment.cancel');
+
+Route::post('stripe/webhook', [StripePaymentController::class, 'webhook'])
+    ->name('stripe.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| Public Calendar Invite Download (.ics)
+|--------------------------------------------------------------------------
+*/
+Route::get('appointments/{cancellation_token}/calendar.ics', function (string $cancellation_token) {
+    $appointment = \App\Models\Appointment::where('cancellation_token', $cancellation_token)
+        ->with(['business', 'service', 'staffMember'])
+        ->firstOrFail();
+
+    $icsContent = app(\App\Services\Calendar\IcsGenerator::class)->generate($appointment);
+
+    return response($icsContent, 200, [
+        'Content-Type' => 'text/calendar; charset=utf-8',
+        'Content-Disposition' => 'attachment; filename="invite.ics"',
+    ]);
+})->name('appointments.calendar.ics');
 
 /*
 |--------------------------------------------------------------------------
