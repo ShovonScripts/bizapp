@@ -58,11 +58,45 @@ class Tenant
             return static::$businessId;
         }
 
-        return auth()->user()?->business_id;
+        $user = auth()->user();
+
+        if ($user?->isSuperAdmin()) {
+            return session('operate_business_id') ?? $user->business_id;
+        }
+
+        return $user?->business_id;
     }
 
     public static function check(): bool
     {
         return static::id() !== null;
+    }
+
+    /** True when a super-admin is actively operating a specific business. */
+    public static function isOperating(): bool
+    {
+        return (bool) (auth()->user()?->isSuperAdmin() && session()->has('operate_business_id'));
+    }
+
+    /** Set or clear the active business being operated by a super-admin. */
+    public static function operateAs(?int $businessId): void
+    {
+        if ($businessId) {
+            session(['operate_business_id' => $businessId]);
+        } else {
+            session()->forget('operate_business_id');
+        }
+    }
+
+    /** Retrieve the current business being operated by the super-admin. */
+    public static function operatingBusiness(): ?\App\Models\Business
+    {
+        if (! static::isOperating()) {
+            return null;
+        }
+
+        $id = static::id();
+
+        return $id ? \App\Models\Business::find($id) : null;
     }
 }

@@ -59,6 +59,11 @@ class Business extends Model
         return $this->hasMany(Appointment::class);
     }
 
+    public function channelConnections(): HasMany
+    {
+        return $this->hasMany(ChannelConnection::class);
+    }
+
     /* -----------------------------------------------------------------
      | Timezone helpers
      |
@@ -112,6 +117,57 @@ class Business extends Model
     public function invoicePrefix(): string
     {
         return $this->setting('invoice_prefix', 'INV');
+    }
+
+    /* -----------------------------------------------------------------
+     | Deposit & Payment Policy Helpers
+     * ----------------------------------------------------------------- */
+
+    public function depositEnabled(): bool
+    {
+        return (bool) $this->setting('deposit.enabled', false);
+    }
+
+    public function depositType(): string
+    {
+        return $this->setting('deposit.type', 'percentage'); // percentage, fixed, full
+    }
+
+    public function depositValue(): float
+    {
+        return (float) $this->setting('deposit.value', 20.0);
+    }
+
+    public function calculateDepositFor(float $price): float
+    {
+        if (! $this->depositEnabled() || $price <= 0) {
+            return 0.00;
+        }
+
+        $type = $this->depositType();
+        $value = $this->depositValue();
+
+        if ($type === 'full') {
+            return round($price, 2);
+        }
+
+        if ($type === 'fixed') {
+            return round(min($price, max(0.0, $value)), 2);
+        }
+
+        // Percentage (e.g. 20%)
+        $pct = min(100.0, max(0.0, $value));
+        return round(($price * $pct) / 100, 2);
+    }
+
+    public function stripeConfig(): array
+    {
+        return [
+            'secret_key' => $this->setting('stripe.secret_key', config('services.stripe.secret')),
+            'publishable_key' => $this->setting('stripe.publishable_key', config('services.stripe.key')),
+            'webhook_secret' => $this->setting('stripe.webhook_secret', config('services.stripe.webhook_secret')),
+            'test_mode' => (bool) $this->setting('stripe.test_mode', true),
+        ];
     }
 
     public function onTrial(): bool

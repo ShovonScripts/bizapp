@@ -1,3 +1,494 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =================================================================
+   BizFlow — Custom Design Layer
+   All animations and utilities that Tailwind does not ship out of the
+   box. These power the visual upgrade across every screen.
+   ================================================================= */
+
+/* ─── Keyframes ─────────────────────────────────────────────────── */
+
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes glass-shine {
+    0%   { transform: translateX(-100%) rotate(25deg); }
+    100% { transform: translateX(200%) rotate(25deg); }
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .5; transform: scale(1.5); }
+}
+
+@keyframes toast-progress {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+@keyframes loading-bar {
+    0%   { transform: translateX(-100%); }
+    50%  { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes gentle-bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+}
+
+@keyframes scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes float-slow {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+}
+
+@keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(225, 29, 72, 0.15); }
+    50%      { box-shadow: 0 0 25px rgba(225, 29, 72, 0.3); }
+}
+
+/* ─── Animation Utilities ───────────────────────────────────────── */
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.4s ease-out both;
+}
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out both;
+}
+.animate-scale-in {
+    animation: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-pulse-dot {
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+.animate-gentle-bounce {
+    animation: gentle-bounce 2s ease-in-out infinite;
+}
+.animate-float-slow {
+    animation: float-slow 3s ease-in-out infinite;
+}
+.animate-glow-pulse {
+    animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+/* ─── Motion Interaction Classes ────────────────────────────────── */
+.motion-card {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.motion-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+.motion-btn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.motion-btn:hover {
+    transform: translateY(-1px);
+}
+.motion-btn:active {
+    transform: scale(0.98);
+}
+
+/* Staggered delays for card grids */
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
+
+/* ─── Stat Cards ────────────────────────────────────────────────── */
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+    background: theme('colors.mulberry.700');
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Color variants for left stripe */
+.stat-card--mulberry::before { background: theme('colors.mulberry.700'); }
+.stat-card--sky::before      { background: #0ea5e9; }
+.stat-card--emerald::before  { background: #10b981; }
+.stat-card--amber::before    { background: #f59e0b; }
+
+/* ─── Glass Card ────────────────────────────────────────────────── */
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* ─── Appointment Card ──────────────────────────────────────────── */
+
+.appointment-card {
+    position: relative;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.appointment-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+}
+.appointment-card:hover {
+    background-color: theme('colors.gray.50');
+}
+
+/* ─── Skeleton Loader ───────────────────────────────────────────── */
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        theme('colors.gray.200') 25%,
+        theme('colors.gray.100') 50%,
+        theme('colors.gray.200') 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 0.375rem;
+}
+
+/* ─── Toast Enhancement ─────────────────────────────────────────── */
+
+.toast-enter {
+    animation: slide-in-right 0.3s ease-out both;
+}
+.toast-progress {
+    animation: toast-progress 3s linear forwards;
+    transform-origin: left;
+}
+
+/* ─── Global Loading Bar ────────────────────────────────────────── */
+
+.loading-bar {
+    animation: loading-bar 1.2s ease-in-out infinite;
+}
+
+/* ─── Avatar Initials ───────────────────────────────────────────── */
+
+.avatar-initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: white;
+    background: linear-gradient(135deg, theme('colors.mulberry.600'), theme('colors.mulberry.800'));
+    text-transform: uppercase;
+    user-select: none;
+}
+.avatar-initials--sm {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.6875rem;
+}
+
+/* ─── Active Tab Dot ────────────────────────────────────────────── */
+
+.tab-dot {
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    margin-top: 2px;
+}
+
+/* ─── Smooth Scrollbar (modals) ─────────────────────────────────── */
+
+.smooth-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+.smooth-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.smooth-scroll::-webkit-scrollbar-thumb {
+    background: theme('colors.gray.300');
+    border-radius: 9999px;
+}
+.smooth-scroll::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.gray.400');
+}
+
+/* ─── Backdrop Blur Overlay ─────────────────────────────────────── */
+
+.overlay-blur {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* ─── Day Strip Enhancement ─────────────────────────────────────── */
+
+.day-cell {
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.day-cell:active {
+    transform: scale(0.97);
+}
+
+/* ─── Subtle Page Background ────────────────────────────────────── */
+
+.page-gradient {
+    background: linear-gradient(
+        180deg,
+        theme('colors.mulberry.50') 0%,
+        theme('colors.gray.100') 120px
+    );
+}
+
+/* ─── Reduced Motion ────────────────────────────────────────────────
+   WCAG 2.1 (2.3.3 Animation from Interactions). Four animations in this
+   file loop forever — the pulsing dot, the gentle bounce, the skeleton
+   shimmer and the loading bar. For someone with vestibular sensitivity a
+   permanent looping animation is not decoration, it is a symptom trigger,
+   and they cannot turn it off from inside the app.
+
+   Entrances are reduced to almost-nothing rather than removed: setting
+   animation: none on .animate-fade-in-up would leave any element that
+   relies on its `both` fill-mode stuck at opacity 0, i.e. invisible. 0.01ms
+   keeps the end state and drops the movement.
+
+   Scoped to this file's own classes on purpose. A blanket
+   `*, *::before, *::after { animation: none }` would also kill Livewire's
+   and Alpine's transitions, which are how the modal and the toast announce
+   themselves.
+   ------------------------------------------------------------------ */
+
+/* ─── Liquid Glass Design Layer ────────────────────────────────────── */
+
+.liquid-glass-border {
+    background: linear-gradient(180deg, #ffffff 0%, #c9c9c9 9%, #a1a1a1 32%, #757575 73%, #ffffff 100%);
+    box-shadow: 
+        0.3px 4.4px 2.2px rgba(0, 0, 0, 0.01),
+        0.5px 7.2px 3.6px rgba(0, 0, 0, 0.01),
+        0.8px 11.7px 5.9px rgba(0, 0, 0, 0.02),
+        1.3px 19px 9.6px rgba(0, 0, 0, 0.03),
+        2.2px 33px 16.5px rgba(0, 0, 0, 0.03),
+        4px 60px 30px rgba(0, 0, 0, 0.06);
+}
+
+.liquid-glass-content {
+    background: linear-gradient(150deg, #d2d4d8 0%, #e9eaec 50%, #c8cacd 100%);
+    box-shadow: inset 0px 1px 1.5px 0px rgba(255, 255, 255, 0.7), inset 0px -1px 1.5px 0px rgba(0, 0, 0, 0.07);
+}
+
+.liquid-glass-input {
+    background-color: rgba(255, 255, 255, 0.45);
+    box-shadow: inset 0px 1px 1px 0px rgba(255, 255, 255, 0.7), inset 0px -1px 1.5px 0px rgba(0, 0, 0, 0.06);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-input:focus {
+    background-color: rgba(255, 255, 255, 0.65);
+    box-shadow: inset 0px 1px 1px 0px rgba(255, 255, 255, 0.9), 0px 8px 20px -6px rgba(148, 160, 181, 0.35);
+}
+
+.liquid-glass-btn {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 226, 230, 0.85) 100%);
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.08), inset 0px 1px 1px rgba(255, 255, 255, 0.9);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-btn:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(180deg, #ffffff 0%, rgba(235, 237, 240, 0.95) 100%);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.12), inset 0px 1px 1px rgba(255, 255, 255, 1);
+}
+
+.liquid-glass-btn:active {
+    transform: translateY(0);
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.06), inset 0px 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.liquid-glass-social {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: inset 0px 1px 1px 0px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-social:hover {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: inset 0px 1px 1px 0px rgba(255, 255, 255, 1), 0 8px 16px -2px rgba(0, 0, 0, 0.08);
+}
+
+.liquid-glass-navbar {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 
+        0 4px 20px -2px rgba(0, 0, 0, 0.04),
+        inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9);
+}
+
+.liquid-glass-card {
+    position: relative;
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.85) 0%, rgba(245, 246, 248, 0.75) 50%, rgba(235, 237, 241, 0.85) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 
+        0 10px 30px -10px rgba(0, 0, 0, 0.05),
+        inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 1.5px 0 rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-card-hover:hover {
+    transform: translateY(-3px);
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 251, 0.85) 50%, rgba(240, 242, 246, 0.95) 100%);
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 
+        0 20px 40px -15px rgba(0, 0, 0, 0.08),
+        0 0 25px rgba(255, 255, 255, 0.5),
+        inset 0 1px 2px 0 rgba(255, 255, 255, 1);
+}
+
+.liquid-glass-card-accent {
+    position: relative;
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.92) 0%, rgba(254, 248, 251, 0.85) 50%, rgba(246, 235, 241, 0.9) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(203, 118, 155, 0.4);
+    box-shadow: 
+        0 12px 35px -8px rgba(125, 47, 81, 0.12),
+        inset 0 1px 1.5px 0 rgba(255, 255, 255, 1),
+        inset 0 -1px 1.5px 0 rgba(125, 47, 81, 0.08);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-card-accent:hover {
+    transform: translateY(-3px);
+    border-color: rgba(203, 118, 155, 0.7);
+    box-shadow: 
+        0 24px 45px -10px rgba(125, 47, 81, 0.18),
+        0 0 30px rgba(203, 118, 155, 0.15),
+        inset 0 1px 2px 0 rgba(255, 255, 255, 1);
+}
+
+.liquid-glass-badge {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05), inset 0 1px 1px 0 rgba(255, 255, 255, 1);
+}
+
+.liquid-glass-btn-primary {
+    background: linear-gradient(180deg, #993c64 0%, #7d2f51 50%, #692945 100%);
+    box-shadow: 
+        0 4px 14px -2px rgba(125, 47, 81, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.35),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-btn-primary:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(180deg, #b4547d 0%, #993c64 50%, #7d2f51 100%);
+    box-shadow: 
+        0 8px 22px -3px rgba(125, 47, 81, 0.5),
+        inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.liquid-glass-btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(125, 47, 81, 0.3);
+}
+
+.liquid-glass-pill {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    /* Looping — stopped outright. */
+    .animate-pulse-dot,
+    .animate-gentle-bounce,
+    .skeleton,
+    .loading-bar {
+        animation: none;
+    }
+
+    /* The loading bar still has to read as "busy", so it becomes a static
+       filled track rather than a travelling sliver. */
+    .loading-bar {
+        width: 100%;
+        transform: none;
+    }
+
+    /* Entrances — end state kept, movement dropped. */
+    .animate-fade-in-up,
+    .animate-slide-in-right {
+        animation-duration: 0.01ms;
+        animation-delay: 0ms;
+    }
+
+    .delay-1, .delay-2, .delay-3,
+    .delay-4, .delay-5, .delay-6 {
+        animation-delay: 0ms;
+    }
+
+    /* Hover and press feedback — colour still changes, nothing moves. */
+    .stat-card,
+    .appointment-card,
+    .day-cell {
+        transition-property: background-color, box-shadow;
+    }
+
+    .stat-card:hover {
+        transform: none;
+    }
+
+    .day-cell:active {
+        transform: none;
+    }
+}

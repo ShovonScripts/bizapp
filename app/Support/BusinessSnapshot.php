@@ -339,4 +339,160 @@ class BusinessSnapshot
 
         return $items;
     }
+
+    /* ----------------------------------------------------------------------
+     | Revenue & Performance Analytics
+     * -------------------------------------------------------------------- */
+
+    public function analytics(): array
+    {
+        return [
+            'weekly' => $this->weeklyRevenue(),
+            'topServices' => $this->topServices(),
+            'staffLeaderboard' => $this->staffLeaderboard(),
+            'kpis' => $this->performanceMetrics(),
+        ];
+    }
+
+    public function weeklyRevenue(): array
+    {
+        $days = [];
+        $maxRevenue = 0.0;
+
+        // Last 7 local days ending today
+        for ($i = 6; $i >= 0; $i--) {
+            $localDay = $this->now->copy()->subDays($i);
+            $startUtc = $localDay->copy()->startOfDay()->utc();
+            $endUtc = $localDay->copy()->endOfDay()->utc();
+
+            $completed = $this->business->appointments()
+                ->where('status', Appointment::COMPLETED)
+                ->whereBetween('starts_at', [$startUtc, $endUtc]);
+
+            $revenue = (float) $completed->sum('price');
+            $count = (int) $completed->count();
+
+            if ($revenue > $maxRevenue) {
+                $maxRevenue = $revenue;
+            }
+
+            $days[] = [
+                'day' => $localDay->format('D'),
+                'date' => $localDay->format('j M'),
+                'isToday' => $i === 0,
+                'revenue' => $revenue,
+                'count' => $count,
+                'heightPct' => 0,
+            ];
+        }
+
+        $effectiveMax = $maxRevenue > 0 ? $maxRevenue : 1.0;
+        foreach ($days as &$d) {
+            $d['heightPct'] = $maxRevenue > 0
+                ? max(10, (int) round(($d['revenue'] / $effectiveMax) * 100))
+                : 10;
+        }
+        unset($d);
+
+        $totalWeekRevenue = array_sum(array_column($days, 'revenue'));
+        $totalWeekCount = array_sum(array_column($days, 'count'));
+
+        return [
+            'days' => $days,
+            'totalRevenue' => $totalWeekRevenue,
+            'totalBookings' => $totalWeekCount,
+            'maxRevenue' => $maxRevenue,
+        ];
+    }
+
+    public function topServices(int $limit = 5): Collection
+    {
+        $completedAppointments = $this->business->appointments()
+            ->where('status', Appointment::COMPLETED)
+            ->with('service')
+            ->get();
+
+        $totalRevenue = (float) $completedAppointments->sum('price');
+
+        return $completedAppointments
+            ->groupBy('service_id')
+            ->map(function (Collection $group) use ($totalRevenue) {
+                $service = $group->first()->service;
+                $revenue = (float) $group->sum('price');
+                $count = $group->count();
+                $share = $totalRevenue > 0 ? round(($revenue / $totalRevenue) * 100, 1) : 0;
+
+                return [
+                    'service_id' => $service?->id,
+                    'name' => $service?->name ?? 'Standard Service',
+                    'count' => $count,
+                    'revenue' => $revenue,
+                    'share' => $share,
+                ];
+            })
+            ->sortByDesc('revenue')
+            ->take($limit)
+            ->values();
+    }
+
+    public function staffLeaderboard(): Collection
+    {
+        $completedAppointments = $this->business->appointments()
+            ->where('status', Appointment::COMPLETED)
+            ->get();
+
+        $allStaff = $this->business->staffMembers()->get();
+
+        return $allStaff->map(function ($staff) use ($completedAppointments) {
+            $staffAppointments = $completedAppointments->where('staff_member_id', $staff->id);
+            $revenue = (float) $staffAppointments->sum('price');
+            $count = $staffAppointments->count();
+
+            return [
+                'id' => $staff->id,
+                'name' => $staff->name,
+                'color' => $staff->color ?: '#e11d48',
+                'count' => $count,
+                'revenue' => $revenue,
+            ];
+        })
+        ->sortByDesc('revenue')
+        ->values();
+    }
+
+    public function performanceMetrics(): array
+    {
+        $completed = $this->business->appointments()
+            ->where('status', Appointment::COMPLETED);
+
+        $totalRevenue = (float) $completed->sum('price');
+        $totalCompleted = (int) $completed->count();
+
+        $aov = $totalCompleted > 0 ? round($totalRevenue / $totalCompleted, 2) : 0.0;
+
+        $customerCount = $this->business->customers()->count();
+        $repeatCustomerCount = $this->business->customers()
+            ->has('appointments', '>=', 2)
+            ->count();
+
+        $retentionRate = $customerCount > 0
+            ? round(($repeatCustomerCount / $customerCount) * 100, 1)
+            : 0.0;
+
+        $totalAllBookings = $this->business->appointments()->count();
+        $onlineBookings = $this->business->appointments()->where('source', 'online')->count();
+        $onlineShare = $totalAllBookings > 0
+            ? round(($onlineBookings / $totalAllBookings) * 100, 1)
+            : 0.0;
+
+        return [
+            'totalRevenue' => $totalRevenue,
+            'totalCompleted' => $totalCompleted,
+            'aov' => $aov,
+            'retentionRate' => $retentionRate,
+            'onlineShare' => $onlineShare,
+            'onlineBookings' => $onlineBookings,
+            'repeatCustomers' => $repeatCustomerCount,
+        ];
+    }
 }

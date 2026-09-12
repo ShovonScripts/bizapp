@@ -625,4 +625,73 @@ class CustomerScreenTest extends TestCase
 
         Volt::test('customers.index')->assertDontSee('Invite');
     }
+
+    /* ================================================================
+     | Customer 360 Profile Drawer
+     * ================================================================ */
+
+    public function test_view_profile_loads_customer_data_and_history(): void
+    {
+        $customer = $this->customer([
+            'name' => 'Emma Watson',
+            'phone' => '+447700900999',
+            'total_spend' => 120.00,
+            'notes' => 'Prefers herbal tea',
+        ]);
+
+        $this->actingAs($this->owner);
+
+        $component = Volt::test('customers.index')
+            ->call('viewProfile', $customer->id)
+            ->assertSet('viewingCustomerId', $customer->id)
+            ->assertSet('profileNotes', 'Prefers herbal tea')
+            ->assertSee('Emma Watson')
+            ->assertSee('Customer Insights');
+
+        $viewingData = $component->viewData('viewingData');
+        $this->assertNotNull($viewingData);
+        $this->assertSame('Emma Watson', $viewingData['customer']->name);
+        $this->assertStringContainsString('447700900999', $viewingData['whatsappUrl']);
+    }
+
+    public function test_view_profile_cannot_access_another_business_customer(): void
+    {
+        $otherCustomer = Customer::factory()->forBusiness($this->gym)->create([
+            'name' => 'Gym Member',
+        ]);
+
+        $this->actingAs($this->owner);
+
+        $this->expectException(ModelNotFoundException::class);
+
+        Volt::test('customers.index')->call('viewProfile', $otherCustomer->id);
+    }
+
+    public function test_profile_notes_can_be_saved_inline(): void
+    {
+        $customer = $this->customer(['name' => 'Emma Watson', 'notes' => 'Original note']);
+
+        $this->actingAs($this->owner);
+
+        Volt::test('customers.index')
+            ->call('viewProfile', $customer->id)
+            ->set('profileNotes', 'Updated allergy information')
+            ->call('saveProfileNotes');
+
+        $customer->refresh();
+        $this->assertSame('Updated allergy information', $customer->notes);
+    }
+
+    public function test_close_profile_resets_drawer_state(): void
+    {
+        $customer = $this->customer(['name' => 'Emma Watson']);
+
+        $this->actingAs($this->owner);
+
+        Volt::test('customers.index')
+            ->call('viewProfile', $customer->id)
+            ->call('closeProfile')
+            ->assertSet('viewingCustomerId', null)
+            ->assertSet('profileNotes', '');
+    }
 }

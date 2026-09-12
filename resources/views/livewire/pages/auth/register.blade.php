@@ -21,7 +21,7 @@ new #[Layout('layouts.guest')] class extends Component
     /**
      * Handle an incoming registration request.
      *
-     * ⚠️ SECURITY — WHY THIS IS NOT THE STOCK BREEZE VERSION.
+     * [SECURITY] WHY THIS IS NOT THE STOCK BREEZE VERSION.
      *
      * Breeze ships `User::create($validated)` with no business_id. In this app
      * business_id = null means SUPER-ADMIN — a user who bypasses every tenant

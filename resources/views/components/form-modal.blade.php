@@ -62,7 +62,7 @@
 
     {{-- No dismiss-on-click. A stray edge tap discarding a half-typed booking is a
          worse outcome than one extra tap on Cancel, and thumbs hit edges. --}}
-    <div class="fixed inset-0 bg-gray-900/50" aria-hidden="true"></div>
+    <div class="fixed inset-0 bg-gray-900/50 overlay-blur" aria-hidden="true"></div>
 
     {{-- x-on:submit runs alongside wire:submit, not instead of it. Safe to blur
          here: a deferred wire:model captures its value on `input`, so nothing
@@ -82,7 +82,7 @@
             </button>
         </div>
 
-        <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+        <div class="flex-1 space-y-4 overflow-y-auto px-5 py-4 smooth-scroll">
             {{ $slot }}
         </div>
 

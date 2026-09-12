@@ -1,6 +1,6 @@
 # BizFlow — Engineering Handover
 
-**Last updated:** 2026-09-10
+**Last updated:** 2026-09-11 (See [CHANGELOG-2026-09-11.md](file:///c:/xampp/htdocs/bizapp/docs/CHANGELOG-2026-09-11.md) for full details of today's 7 completed milestones)
 **Repo:** `C:\xampp\htdocs\bizapp` (local XAMPP)
 **Status:** pre-launch, locally proven. No paying clients. No production
 deployment yet.

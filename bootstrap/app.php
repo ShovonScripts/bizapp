@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->validateCsrfTokens(except: [
             'telegram/webhook',
+            'whatsapp/webhook',
+            'stripe/webhook',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

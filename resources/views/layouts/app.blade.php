@@ -19,7 +19,14 @@
             Skip to content
         </a>
 
-        <div class="min-h-screen bg-gray-100">
+        <div class="min-h-screen page-gradient">
+            {{-- Global loading indicator — thin bar at the top that runs during
+                 any Livewire request. Keeps the owner aware something is happening
+                 without blocking the screen. --}}
+            <div wire:loading.delay class="fixed inset-x-0 top-0 z-[60] h-0.5 overflow-hidden bg-mulberry-100">
+                <div class="h-full w-1/3 bg-mulberry-600 loading-bar"></div>
+            </div>
+
             <livewire:layout.navigation />
 
             <!-- Page Heading -->

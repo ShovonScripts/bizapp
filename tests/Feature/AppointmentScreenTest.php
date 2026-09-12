@@ -1076,4 +1076,128 @@ class AppointmentScreenTest extends TestCase
 
         $this->assertSame(35.0, (float) $takings);
     }
+
+    /* ================================================================
+     | Calendar view mode & Quick Reschedule
+     * ================================================================ */
+
+    public function test_view_mode_can_be_switched_to_columns(): void
+    {
+        $this->actingAs($this->owner);
+
+        $component = Volt::test('appointments.index')
+            ->set('date', '2026-07-15')
+            ->call('setViewMode', 'columns')
+            ->assertSet('viewMode', 'columns')
+            ->assertSee($this->stylist->name);
+    }
+
+    public function test_create_for_staff_pre_fills_staff_member_id(): void
+    {
+        $this->actingAs($this->owner);
+
+        Volt::test('appointments.index')
+            ->set('date', '2026-07-15')
+            ->call('createForStaff', $this->stylist->id)
+            ->assertSet('showForm', true)
+            ->assertSet('staff_member_id', $this->stylist->id);
+    }
+
+    public function test_quick_reschedule_modal_can_be_opened(): void
+    {
+        $booking = $this->booking([
+            'starts_at' => $this->london('2026-07-15 10:00'),
+            'ends_at' => $this->london('2026-07-15 10:45'),
+            'staff_member_id' => $this->stylist->id,
+        ]);
+
+        $this->actingAs($this->owner);
+
+        Volt::test('appointments.index')
+            ->set('date', '2026-07-15')
+            ->call('openReschedule', $booking->id)
+            ->assertSet('showReschedule', true)
+            ->assertSet('reschedulingId', $booking->id)
+            ->assertSet('reschedule_date', '2026-07-15')
+            ->assertSet('reschedule_time', '10:00')
+            ->assertSet('reschedule_staff_id', $this->stylist->id);
+    }
+
+    public function test_quick_reschedule_presets_shift_date_and_time(): void
+    {
+        $booking = $this->booking([
+            'starts_at' => $this->london('2026-07-15 10:00'),
+            'ends_at' => $this->london('2026-07-15 10:45'),
+            'staff_member_id' => $this->stylist->id,
+        ]);
+
+        $this->actingAs($this->owner);
+
+        Volt::test('appointments.index')
+            ->call('openReschedule', $booking->id)
+            ->call('applyReschedulePreset', 'tomorrow')
+            ->assertSet('reschedule_date', '2026-07-16')
+            ->call('applyReschedulePreset', 'plus_15m')
+            ->assertSet('reschedule_time', '10:15');
+    }
+
+    public function test_save_reschedule_updates_slot_and_closes_modal(): void
+    {
+        $booking = $this->booking([
+            'starts_at' => $this->london('2026-07-15 10:00'),
+            'ends_at' => $this->london('2026-07-15 10:45'),
+            'staff_member_id' => $this->stylist->id,
+        ]);
+
+        $this->actingAs($this->owner);
+
+        Volt::test('appointments.index')
+            ->call('openReschedule', $booking->id)
+            ->set('reschedule_date', '2026-07-16')
+            ->set('reschedule_time', '11:00')
+            ->call('saveReschedule')
+            ->assertSet('showReschedule', false)
+            ->assertSet('date', '2026-07-16');
+
+        $booking->refresh();
+
+        $this->assertSame('2026-07-16 10:00:00', $booking->starts_at->toDateTimeString()); // UTC in summer is -1h
+        $this->assertSame('2026-07-16 10:45:00', $booking->ends_at->toDateTimeString());
+    }
+
+    public function test_quick_reschedule_warns_on_clash_and_respects_override(): void
+    {
+        // Existing booking on 2026-07-15 from 14:00 to 14:45
+        $this->booking([
+            'starts_at' => $this->london('2026-07-15 14:00'),
+            'ends_at' => $this->london('2026-07-15 14:45'),
+            'staff_member_id' => $this->stylist->id,
+        ]);
+
+        // Booking to move
+        $booking = $this->booking([
+            'starts_at' => $this->london('2026-07-15 10:00'),
+            'ends_at' => $this->london('2026-07-15 10:45'),
+            'staff_member_id' => $this->stylist->id,
+        ]);
+
+        $this->actingAs($this->owner);
+
+        // Attempting to move into 14:15 clashes
+        $component = Volt::test('appointments.index')
+            ->call('openReschedule', $booking->id)
+            ->set('reschedule_date', '2026-07-15')
+            ->set('reschedule_time', '14:15')
+            ->call('saveReschedule')
+            ->assertSet('showReschedule', true);
+
+        $this->assertNotNull($component->get('reschedule_conflict'));
+
+        $component->set('reschedule_allow_overlap', true)
+            ->call('saveReschedule')
+            ->assertSet('showReschedule', false);
+
+        $booking->refresh();
+        $this->assertSame('2026-07-15 13:15:00', $booking->starts_at->toDateTimeString());
+    }
 }

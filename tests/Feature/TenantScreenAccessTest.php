@@ -35,11 +35,15 @@ class TenantScreenAccessTest extends TestCase
      */
     protected const NON_TENANT_ROUTES = [
         '/',                 // marketing page, no data at all
+        'pricing',           // public marketing page, no tenant data
+        'privacy',           // public legal page
+        'terms',             // public legal page
         'up',                // framework health check
         'profile',           // the logged-in user's own account
         'verify-email',      // auth flow, belongs to the user not the business
         'confirm-password',  // auth flow
         'heartbeat',         // ops endpoint, token-protected, no business data
+        'whatsapp/webhook',  // Meta webhook verification handshake (GET challenge)
 
         /*
          * dashboard — the one screen that branches instead of aborting.
@@ -131,7 +135,7 @@ class TenantScreenAccessTest extends TestCase
     {
         $found = $this->tenantRoutes();
 
-        foreach (['appointments', 'customers', 'services', 'staff'] as $expected) {
+        foreach (['appointments', 'customers', 'services', 'staff', 'settings'] as $expected) {
             $this->assertContains(
                 $expected,
                 $found,

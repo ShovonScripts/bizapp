@@ -29,6 +29,10 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
     public bool $showForm = false;
     public ?int $editingId = null;
 
+    /* ---------------------- Customer 360 Drawer -------------------------- */
+    public ?int $viewingCustomerId = null;
+    public string $profileNotes = '';
+
     /* The Telegram invite panel. Held as plain strings rather than looked up in the
        template, because building the link writes a token to the database and a
        render must never have side effects — Livewire re-renders on every keystroke
@@ -340,6 +344,42 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
         $this->resetValidation();
     }
 
+    public function viewProfile(int $id): void
+    {
+        $customer = Customer::findOrFail($id);
+        $this->viewingCustomerId = $customer->id;
+        $this->profileNotes = (string) $customer->notes;
+    }
+
+    public function closeProfile(): void
+    {
+        $this->viewingCustomerId = null;
+        $this->profileNotes = '';
+    }
+
+    public function saveProfileNotes(): void
+    {
+        if (! $this->viewingCustomerId) {
+            return;
+        }
+
+        $customer = Customer::findOrFail($this->viewingCustomerId);
+        $customer->update(['notes' => $this->profileNotes]);
+
+        $this->toast('Customer notes updated.');
+    }
+
+    public function statusBadge(string $status): string
+    {
+        return match ($status) {
+            \App\Models\Appointment::PENDING => 'bg-amber-50 text-amber-800 ring-amber-200',
+            \App\Models\Appointment::CONFIRMED => 'bg-sky-50 text-sky-800 ring-sky-200',
+            \App\Models\Appointment::COMPLETED => 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+            \App\Models\Appointment::NO_SHOW => 'bg-red-50 text-red-800 ring-red-200',
+            default => 'bg-gray-100 text-gray-600 ring-gray-200',
+        };
+    }
+
     public function with(): array
     {
         $query = Customer::query()->search($this->search);
@@ -352,12 +392,57 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
             default => $query,
         };
 
+        $viewingData = null;
+        if ($this->viewingCustomerId) {
+            $viewingCustomer = Customer::with(['appointments' => fn ($q) => $q->with(['service', 'staffMember'])->orderByDesc('starts_at')])
+                ->findOrFail($this->viewingCustomerId);
+
+            $business = Business::find(Tenant::id());
+            $cleanPhone = preg_replace('/[^0-9]/', '', (string) ($viewingCustomer->whatsappTarget() ?: $viewingCustomer->phone));
+            $bizName = $business?->name ?? 'our team';
+            $greeting = rawurlencode("Hi {$viewingCustomer->name}, from {$bizName}!");
+            $whatsappUrl = $cleanPhone ? "https://wa.me/{$cleanPhone}?text={$greeting}" : null;
+
+            $blockingAppointments = $viewingCustomer->appointments->whereIn('status', \App\Models\Appointment::BLOCKING);
+            $visitsCount = $blockingAppointments->count();
+            $totalSpend = (float) ($viewingCustomer->total_spend ?? 0);
+            $avgSpend = $visitsCount > 0 ? $totalSpend / $visitsCount : 0.0;
+
+            $favService = $viewingCustomer->appointments
+                ->filter(fn ($a) => $a->service)
+                ->groupBy('service.name')
+                ->sortByDesc(fn ($group) => $group->count())
+                ->keys()
+                ->first();
+
+            $favStylist = $viewingCustomer->appointments
+                ->filter(fn ($a) => $a->staffMember)
+                ->groupBy('staffMember.name')
+                ->sortByDesc(fn ($group) => $group->count())
+                ->keys()
+                ->first();
+
+            $viewingData = [
+                'customer' => $viewingCustomer,
+                'business' => $business,
+                'whatsappUrl' => $whatsappUrl,
+                'cleanPhone' => $cleanPhone,
+                'visitsCount' => $visitsCount,
+                'totalSpend' => $totalSpend,
+                'avgSpend' => $avgSpend,
+                'favService' => $favService,
+                'favStylist' => $favStylist,
+                'appointments' => $viewingCustomer->appointments,
+            ];
+        }
+
         return [
             'customers' => $query->orderBy('name')->paginate(15),
             'totalCount' => Customer::count(),
             // Passed in rather than read as self::CHANNELS in the template: Blade
             // compiles to a plain function, so `self` there is not this class.
             'channels' => self::CHANNELS,
+            'viewingData' => $viewingData,
         ];
     }
 }; ?>
@@ -380,18 +465,23 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
         <x-toast />
 
-        <div class="bg-white shadow-sm sm:rounded-lg">
+        <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 overflow-hidden">
 
             <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
-                <div class="flex-1">
+                <div class="flex-1 relative">
                     {{-- No <form> around this one, so Enter cannot submit anything —
                          but on a phone the keyboard still covers the results it just
                          filtered. Blur on Enter hands the screen back. --}}
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
                     <x-text-input wire:model.live.debounce.300ms="search"
                                   type="search"
                                   enterkeyhint="search"
                                   x-on:keydown.enter.prevent="$event.target.blur()"
-                                  class="block w-full"
+                                  class="block w-full pl-9"
                                   placeholder="Search name, email or phone…" />
                 </div>
 
@@ -412,16 +502,29 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
             @endphp
 
             @if ($customers->isEmpty())
-                <div class="px-4 py-12 text-center">
+                <div class="px-4 py-16 text-center">
                     @if ($search !== '' || $filter !== 'all')
-                        <p class="text-gray-500">No customers match that.</p>
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 mb-3 shadow-xs ring-1 ring-slate-200/80 transition-transform duration-300 hover:scale-105">
+                            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                        </div>
+                        <p class="text-gray-500 font-medium">No customers match that.</p>
                         <button type="button" wire:click="clearFilters" class="mt-3 inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
                             Clear filters
                         </button>
                     @else
-                        <p class="text-gray-500">No customers yet.</p>
-                        <p class="mt-1 text-sm text-gray-500">Add the people you see regularly and the reminders take care of themselves.</p>
-                        <x-primary-button type="button" wire:click="create" class="mt-4">Add your first customer</x-primary-button>
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-mulberry-50 text-mulberry-700 mb-3 shadow-xs ring-1 ring-mulberry-100 transition-transform duration-300 hover:scale-105">
+                            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                            </svg>
+                        </div>
+                        <p class="text-gray-500 font-medium">No customers yet.</p>
+                        <p class="mt-1 text-sm text-gray-400">Add the people you see regularly and the reminders take care of themselves.</p>
+                        <x-primary-button type="button" wire:click="create" class="mt-4">
+                            <svg class="h-4 w-4 -ml-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                            Add your first customer
+                        </x-primary-button>
                     @endif
                 </div>
             @else
@@ -441,8 +544,10 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                 @foreach ($customers as $customer)
                     <li wire:key="customer-card-{{ $customer->id }}" x-data="{ actions: false }" class="p-4">
                         <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0 flex-1">
-                                <div class="font-medium text-gray-900">{{ $customer->name }}</div>
+                            <div class="flex items-start gap-3 min-w-0 flex-1 cursor-pointer" wire:click="viewProfile({{ $customer->id }})">
+                                <span class="avatar-initials mt-0.5">{{ mb_substr($customer->name, 0, 1) }}</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="font-medium text-gray-900 hover:text-mulberry-700 transition-colors">{{ $customer->name }}</div>
 
                                 @if ($customer->email)
                                     <div class="mt-0.5 text-sm text-gray-500">{{ $customer->email }}</div>
@@ -458,6 +563,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                 @else
                                     <p class="mt-1 text-sm text-gray-500">No phone number — cannot be reminded</p>
                                 @endif
+                                </div>
                             </div>
 
                             <button type="button" @click="actions = ! actions"
@@ -508,6 +614,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                         <div x-show="actions" x-collapse style="display: none"
                              class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                            <button type="button" wire:click="viewProfile({{ $customer->id }})" class="{{ $act }}">View Profile</button>
                             <button type="button" wire:click="edit({{ $customer->id }})" class="{{ $act }}">Edit</button>
 
                             @if (! $customer->telegramLinked() && $customer->preferred_channel !== 'none')
@@ -539,8 +646,11 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                     <tbody class="divide-y divide-gray-100 bg-white">
                         @foreach ($customers as $customer)
                             <tr wire:key="customer-row-{{ $customer->id }}" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-4 py-3">
-                                    <div class="font-medium text-gray-900">{{ $customer->name }}</div>
+                                <td class="px-4 py-3 cursor-pointer" wire:click="viewProfile({{ $customer->id }})">
+                                    <div class="flex items-center gap-3">
+                                        <span class="avatar-initials--sm avatar-initials">{{ mb_substr($customer->name, 0, 1) }}</span>
+                                        <div>
+                                            <div class="font-medium text-gray-900 hover:text-mulberry-700 transition-colors">{{ $customer->name }}</div>
 
                                     @if ($customer->email)
                                         <div class="text-gray-500">{{ $customer->email }}</div>
@@ -563,6 +673,8 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                             </span>
                                         @endif
                                     </div>
+                                        </div>
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-3 text-gray-700 whitespace-nowrap">
@@ -584,6 +696,11 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                 </td>
 
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
+                                    <button type="button" wire:click="viewProfile({{ $customer->id }})"
+                                            class="me-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                        Profile
+                                    </button>
+
                                     @if (! $customer->telegramLinked() && $customer->preferred_channel !== 'none')
                                         <button type="button" wire:click="telegramLink({{ $customer->id }})"
                                                 class="me-3 rounded-md px-2.5 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">
@@ -761,6 +878,216 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                 <div class="flex shrink-0 justify-end gap-3 border-t border-gray-200 bg-gray-50 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                     <x-secondary-button type="button" wire:click="closeLink">Done</x-secondary-button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ---------------------------------------------------------------
+         Customer 360 Profile Drawer
+    ---------------------------------------------------------------- --}}
+    @if ($viewingCustomerId && $viewingData)
+        @php
+            $cust = $viewingData['customer'];
+        @endphp
+        <div class="fixed inset-0 z-50 overflow-hidden" aria-labelledby="customer-360-title" role="dialog" aria-modal="true">
+            {{-- Backdrop blur --}}
+            <div class="fixed inset-0 bg-gray-900/50 overlay-blur transition-opacity"
+                 wire:click="closeProfile"></div>
+
+            <div class="fixed inset-y-0 right-0 flex max-w-full pl-10">
+                <div class="w-screen max-w-lg transform transition ease-in-out duration-300 bg-white shadow-2xl flex flex-col">
+
+                    {{-- Drawer Header --}}
+                    <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex items-start justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <span class="h-14 w-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-md bg-gradient-to-tr from-mulberry-700 to-mulberry-500">
+                                {{ mb_substr($cust->name, 0, 1) }}
+                            </span>
+                            <div>
+                                <h2 id="customer-360-title" class="text-xl font-bold text-gray-900 leading-tight">
+                                    {{ $cust->name }}
+                                </h2>
+                                <p class="text-xs text-gray-500 mt-0.5">
+                                    Customer since {{ $cust->created_at->format('M Y') }} ·
+                                    @if ($cust->last_visit_at)
+                                        Last seen {{ $cust->last_visit_at->diffForHumans() }}
+                                    @else
+                                        Never visited yet
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+
+                        <button type="button" wire:click="closeProfile"
+                                class="rounded-lg p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                                aria-label="Close profile">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- 1-Tap Direct Outreach Actions --}}
+                    <div class="px-6 py-3.5 bg-gray-50/70 border-b border-gray-100 flex flex-wrap items-center gap-2">
+                        @if ($viewingData['whatsappUrl'])
+                            <a href="{{ $viewingData['whatsappUrl'] }}" target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-2xs hover:bg-emerald-700 transition-colors">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                WhatsApp
+                            </a>
+                        @endif
+
+                        @if ($cust->phone)
+                            <a href="tel:{{ $cust->phone }}"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-800 border border-sky-200 text-xs font-semibold hover:bg-sky-100 transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                Call
+                            </a>
+
+                            <a href="sms:{{ $cust->phone }}"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 border border-gray-200 text-xs font-semibold hover:bg-gray-200 transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                SMS
+                            </a>
+                        @endif
+
+                        @if ($cust->email)
+                            <a href="mailto:{{ $cust->email }}"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200 text-xs font-semibold hover:bg-purple-100 transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                Email
+                            </a>
+                        @endif
+
+                        @if (! $cust->telegramLinked() && $cust->preferred_channel !== 'none')
+                            <button type="button" wire:click="telegramLink({{ $cust->id }})"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 transition-colors">
+                                Invite to Telegram
+                            </button>
+                        @endif
+                    </div>
+
+                    {{-- Scrollable Content Body --}}
+                    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+                        {{-- KPI Cards --}}
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="rounded-xl border border-gray-100 bg-gray-50/70 p-3.5 text-center">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Spend</span>
+                                <div class="mt-1 text-lg font-bold text-gray-900 tabular-nums">
+                                    £{{ number_format($viewingData['totalSpend'], 2) }}
+                                </div>
+                            </div>
+                            <div class="rounded-xl border border-gray-100 bg-gray-50/70 p-3.5 text-center">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Visits</span>
+                                <div class="mt-1 text-lg font-bold text-gray-900 tabular-nums">
+                                    {{ $viewingData['visitsCount'] }}
+                                </div>
+                            </div>
+                            <div class="rounded-xl border border-gray-100 bg-gray-50/70 p-3.5 text-center">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Avg Value</span>
+                                <div class="mt-1 text-lg font-bold text-gray-900 tabular-nums">
+                                    £{{ number_format($viewingData['avgSpend'], 2) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Preferences & Top Choices --}}
+                        <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-2xs space-y-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Customer Insights</h3>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <span class="text-xs text-gray-400 block">Favorite Service</span>
+                                    <span class="font-medium text-gray-800">{{ $viewingData['favService'] ?? 'None yet' }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-gray-400 block">Preferred Stylist</span>
+                                    <span class="font-medium text-gray-800">{{ $viewingData['favStylist'] ?? 'None yet' }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-gray-400 block">Preferred Channel</span>
+                                    <span class="font-medium text-gray-800">{{ \App\Support\Channel::label($cust->preferred_channel) }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-gray-400 block">Reminder Status</span>
+                                    <span class="font-medium {{ $cust->canReceiveTransactional() ? 'text-emerald-700' : 'text-amber-700' }}">
+                                        {{ $cust->canReceiveTransactional() ? 'Can receive reminders' : 'Opted out' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Quick Notes Editor --}}
+                        <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-2xs space-y-2">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Notes & Preferences</h3>
+                                <button type="button" wire:click="saveProfileNotes"
+                                        class="text-xs font-semibold text-mulberry-700 hover:text-mulberry-900">
+                                    Save notes
+                                </button>
+                            </div>
+                            <textarea wire:model="profileNotes" rows="2"
+                                      placeholder="Color formula, preferred tea, allergies, family notes..."
+                                      class="block w-full rounded-lg border-gray-200 bg-gray-50 text-sm focus:border-mulberry-600 focus:ring-mulberry-600"></textarea>
+                        </div>
+
+                        {{-- Booking History Timeline --}}
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">
+                                    Appointment History ({{ $viewingData['appointments']->count() }})
+                                </h3>
+                                <a href="/appointments" class="text-xs font-semibold text-mulberry-700 hover:underline">
+                                    Go to Diary →
+                                </a>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                @forelse ($viewingData['appointments'] as $appt)
+                                    <div class="p-3 rounded-xl border border-gray-100 bg-white shadow-2xs flex items-start justify-between gap-3">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs font-bold text-gray-900 tabular-nums">
+                                                    {{ $appt->starts_at->format('D j M Y, H:i') }}
+                                                </span>
+                                                <span class="inline-flex items-center rounded px-1.5 py-0.2 text-2xs font-medium ring-1 ring-inset {{ $this->statusBadge($appt->status) }}">
+                                                    {{ $appt->statusLabel() }}
+                                                </span>
+                                            </div>
+                                            <p class="text-sm font-medium text-gray-800">
+                                                {{ $appt->service?->name ?? 'Custom Service' }} · £{{ number_format((float) $appt->price, 2) }}
+                                            </p>
+                                            @if ($appt->staffMember)
+                                                <p class="text-xs text-gray-500 flex items-center gap-1">
+                                                    <span class="h-2 w-2 rounded-full inline-block" style="background-color: {{ $appt->staffMember->color }}"></span>
+                                                    {{ $appt->staffMember->name }}
+                                                </p>
+                                            @endif
+                                            @if ($appt->notes)
+                                                <p class="text-xs text-gray-400 italic">{{ $appt->notes }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="py-6 text-center text-xs text-gray-400 border border-dashed border-gray-200 rounded-xl">
+                                        No previous appointments on record.
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Drawer Footer --}}
+                    <div class="p-4 border-t border-gray-100 bg-gray-50/70 flex items-center justify-between gap-3">
+                        <button type="button" wire:click="edit({{ $cust->id }})"
+                                class="text-xs font-semibold text-gray-700 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                            Edit Full Details
+                        </button>
+                        <x-secondary-button wire:click="closeProfile">
+                            Close
+                        </x-secondary-button>
+                    </div>
                 </div>
             </div>
         </div>

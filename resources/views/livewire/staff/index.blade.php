@@ -34,6 +34,16 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
     public string $sort_order = '0';
     public bool $active = true;
 
+    // Schedule & Time-Off State
+    public string $activeTab = 'details'; // 'details' | 'schedule' | 'timeoff'
+    public array $workingHours = [];
+    public array $timeOffList = [];
+    public string $newTimeOffDate = '';
+    public string $newTimeOffReason = 'Annual Leave';
+    public bool $newTimeOffAllDay = true;
+    public string $newTimeOffStart = '09:00';
+    public string $newTimeOffEnd = '17:00';
+
     public function mount(): void
     {
         $this->guardTenant();
@@ -85,6 +95,9 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
     public function create(): void
     {
         $this->resetForm();
+        $this->workingHours = StaffMember::defaultWorkingHours();
+        $this->timeOffList = [];
+        $this->activeTab = 'details';
         $this->showForm = true;
     }
 
@@ -101,8 +114,39 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
         $this->sort_order = (string) $staff->sort_order;
         $this->active = $staff->active;
 
+        $this->workingHours = $staff->working_hours ?: StaffMember::defaultWorkingHours();
+        $this->timeOffList = $staff->time_off ?: [];
+        $this->activeTab = 'details';
+
         $this->resetValidation();
         $this->showForm = true;
+    }
+
+    public function addTimeOff(): void
+    {
+        if (blank($this->newTimeOffDate)) {
+            $this->addError('newTimeOffDate', 'Please choose a date for time off.');
+            return;
+        }
+
+        $this->timeOffList[] = [
+            'id' => uniqid('off_'),
+            'date' => $this->newTimeOffDate,
+            'reason' => $this->newTimeOffReason ?: 'Annual Leave',
+            'all_day' => $this->newTimeOffAllDay,
+            'start' => $this->newTimeOffAllDay ? null : $this->newTimeOffStart,
+            'end' => $this->newTimeOffAllDay ? null : $this->newTimeOffEnd,
+        ];
+
+        $this->newTimeOffDate = '';
+        $this->newTimeOffReason = 'Annual Leave';
+        $this->newTimeOffAllDay = true;
+    }
+
+    public function removeTimeOff(int $index): void
+    {
+        unset($this->timeOffList[$index]);
+        $this->timeOffList = array_values($this->timeOffList);
     }
 
     public function save(): void
@@ -118,7 +162,10 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
             ? new StaffMember()
             : StaffMember::findOrFail($this->editingId);
 
-        $staff->fill($validated)->save();
+        $staff->fill($validated);
+        $staff->working_hours = $this->workingHours;
+        $staff->time_off = array_values($this->timeOffList);
+        $staff->save();
 
         $this->showForm = false;
         $this->resetForm();
@@ -178,7 +225,7 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
 
     public function resetForm(): void
     {
-        $this->reset(['editingId', 'name', 'phone', 'color', 'sort_order', 'active']);
+        $this->reset(['editingId', 'name', 'phone', 'color', 'sort_order', 'active', 'workingHours', 'timeOffList', 'activeTab', 'newTimeOffDate']);
 
         $this->resetValidation();
     }
@@ -220,12 +267,15 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
                 <p class="text-sm text-gray-500">Who does the work, and their colour on the calendar</p>
             </div>
 
-            <x-primary-button type="button" wire:click="create">Add staff</x-primary-button>
+            <x-primary-button type="button" wire:click="create">
+                <svg class="h-4 w-4 -ml-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                Add staff
+            </x-primary-button>
         </div>
 
         <x-toast />
 
-        <div class="bg-white shadow-sm sm:rounded-lg">
+        <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 overflow-hidden">
 
             @if ($inactiveCount > 0)
                 <div class="border-b border-gray-100 px-4">
@@ -243,16 +293,24 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
             @endphp
 
             @if ($staff->isEmpty())
-                <div class="px-4 py-12 text-center">
+                <div class="px-4 py-16 text-center">
                     @if ($inactiveCount > 0)
                         {{-- Not "no staff yet": there are people, they are just all
                              hidden, and the toggle to bring them back is right above. --}}
                         <p class="text-gray-500">Everyone is hidden right now.</p>
-                        <p class="mt-1 text-sm text-gray-500">Tick "Show {{ $inactiveCount }} hidden" above to see them.</p>
+                        <p class="mt-1 text-sm text-gray-400">Tick "Show {{ $inactiveCount }} hidden" above to see them.</p>
                     @else
-                        <p class="text-gray-500">No staff yet.</p>
-                        <p class="mt-1 text-sm text-gray-500">Add yourself first, then anyone who takes their own bookings.</p>
-                        <x-primary-button type="button" wire:click="create" class="mt-4">Add the first person</x-primary-button>
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 mb-3 shadow-xs ring-1 ring-indigo-100 transition-transform duration-300 hover:scale-105">
+                            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                            </svg>
+                        </div>
+                        <p class="text-gray-500 font-medium">No staff yet.</p>
+                        <p class="mt-1 text-sm text-gray-400">Add yourself first, then anyone who takes their own bookings.</p>
+                        <x-primary-button type="button" wire:click="create" class="mt-4">
+                            <svg class="h-4 w-4 -ml-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                            Add the first person
+                        </x-primary-button>
                     @endif
                 </div>
             @else
@@ -293,6 +351,12 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
                             </span>
                         </div>
 
+                        <div class="ms-5 mt-2 flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                {{ $member->workingDaysSummary() }}
+                            </span>
+                        </div>
+
                         <div class="mt-3 flex flex-wrap gap-2">
                             <button type="button" wire:click="edit({{ $member->id }})" class="{{ $act }}">Edit</button>
 
@@ -317,6 +381,7 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
                         <tr>
                             <th class="px-4 py-3 text-left font-medium">Name</th>
                             <th class="px-4 py-3 text-left font-medium">Phone</th>
+                            <th class="px-4 py-3 text-left font-medium">Schedule</th>
                             <th class="px-4 py-3 text-right font-medium">Upcoming</th>
                             <th class="px-4 py-3 text-right font-medium">Total booked</th>
                             <th class="px-4 py-3 text-right font-medium"><span class="sr-only">Actions</span></th>
@@ -345,6 +410,12 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
 
                                 <td class="px-4 py-3 text-gray-700 whitespace-nowrap">
                                     {{ \App\Support\Phone::forHumans($member->phone) ?? '—' }}
+                                </td>
+
+                                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                        {{ $member->workingDaysSummary() }}
+                                    </span>
                                 </td>
 
                                 <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap">
@@ -390,64 +461,185 @@ new #[Layout('layouts.app')] #[Title('Staff')] class extends Component
         <x-form-modal :title="$editingId ? 'Edit staff member' : 'Add staff member'"
                       :submit-label="$editingId ? 'Save changes' : 'Add staff member'">
 
-            <div>
-                <x-input-label for="name" value="Name" />
-                <x-text-input wire:model="name" id="name" type="text" class="mt-1 block w-full"
-                              placeholder="Jade Thompson" autofocus />
-                <p class="mt-1 text-xs text-gray-500">Shown on the diary and in booking confirmations.</p>
-                <x-input-error :messages="$errors->get('name')" class="mt-2" />
+            <!-- Navigation Tabs -->
+            <div class="flex border-b border-gray-200 -mt-2">
+                <button type="button" wire:click="$set('activeTab', 'details')"
+                        class="py-2.5 px-4 text-xs sm:text-sm font-semibold border-b-2 transition-colors {{ $activeTab === 'details' ? 'border-rose-600 text-rose-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+                    Profile &amp; Details
+                </button>
+                <button type="button" wire:click="$set('activeTab', 'schedule')"
+                        class="py-2.5 px-4 text-xs sm:text-sm font-semibold border-b-2 transition-colors {{ $activeTab === 'schedule' ? 'border-rose-600 text-rose-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+                    Working Hours
+                </button>
+                <button type="button" wire:click="$set('activeTab', 'timeoff')"
+                        class="py-2.5 px-4 text-xs sm:text-sm font-semibold border-b-2 transition-colors flex items-center gap-1.5 {{ $activeTab === 'timeoff' ? 'border-rose-600 text-rose-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+                    Time Off &amp; Leave
+                    @if(count($timeOffList) > 0)
+                        <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">{{ count($timeOffList) }}</span>
+                    @endif
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <x-input-label for="phone" value="Phone (optional)" />
-                    <x-text-input wire:model="phone" id="phone" type="tel" class="mt-1 block w-full"
-                                  placeholder="07700 900123" />
-                    <p class="mt-1 text-xs text-gray-500">Used for SMS reminders. Leave blank if they don't take bookings directly.</p>
-                    <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+            @if ($activeTab === 'details')
+                <div class="space-y-4">
+                    <div>
+                        <x-input-label for="name" value="Name" />
+                        <x-text-input wire:model="name" id="name" type="text" class="mt-1 block w-full"
+                                      placeholder="Jade Thompson" autofocus />
+                        <p class="mt-1 text-xs text-gray-500">Shown on the diary and in booking confirmations.</p>
+                        <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <x-input-label for="phone" value="Phone (optional)" />
+                            <x-text-input wire:model="phone" id="phone" type="tel" class="mt-1 block w-full"
+                                          placeholder="07700 900123" />
+                            <p class="mt-1 text-xs text-gray-500">Used for SMS reminders. Leave blank if they don't take bookings directly.</p>
+                            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="sort_order" value="Order in the list" />
+                            <x-text-input wire:model="sort_order" id="sort_order" type="number"
+                                          min="0" max="999" class="mt-1 block w-full" />
+                            <p class="mt-1 text-xs text-gray-500">Low numbers show first. Leave it at 0 if you don't mind.</p>
+                            <x-input-error :messages="$errors->get('sort_order')" class="mt-2" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <x-input-label value="Calendar colour" />
+                        <p class="mt-1 text-xs text-gray-500">Shown on the diary so you can tell staff apart at a glance.</p>
+
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach ($colors as $hex => $label)
+                                <button type="button" wire:click="$set('color', '{{ $hex }}')"
+                                        title="{{ $label }}" aria-label="{{ $label }}"
+                                        aria-pressed="{{ $color === $hex ? 'true' : 'false' }}"
+                                        class="inline-flex min-h-touch min-w-touch items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                    <span class="h-8 w-8 rounded-full ring-offset-2 transition {{ $color === $hex ? 'ring-2 ring-gray-900' : '' }}"
+                                          style="background-color: {{ $hex }}"></span>
+                                </button>
+                            @endforeach
+                        </div>
+
+                        <x-input-error :messages="$errors->get('color')" class="mt-2" />
+                    </div>
+
+                    <label class="flex min-h-touch items-start gap-3 rounded-lg bg-gray-50 p-3">
+                        <input type="checkbox" wire:model="active"
+                               class="mt-0.5 h-5 w-5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
+                        <span class="text-sm text-gray-700">
+                            Available to book
+                            <span class="block text-xs text-gray-500">
+                                Untick when someone leaves. Their past bookings stay on the record,
+                                so your takings history doesn't change.
+                            </span>
+                        </span>
+                    </label>
                 </div>
+            @endif
 
-                <div>
-                    <x-input-label for="sort_order" value="Order in the list" />
-                    <x-text-input wire:model="sort_order" id="sort_order" type="number"
-                                  min="0" max="999" class="mt-1 block w-full" />
-                    <p class="mt-1 text-xs text-gray-500">Low numbers show first. Leave it at 0 if you don't mind.</p>
-                    <x-input-error :messages="$errors->get('sort_order')" class="mt-2" />
+            @if ($activeTab === 'schedule')
+                <div class="space-y-3">
+                    <p class="text-xs text-gray-500">Configure which days and hours this specialist is available for appointments.</p>
+                    <div class="space-y-1.5 border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden bg-white">
+                        @foreach (['monday' => 'Monday', 'tuesday' => 'Tuesday', 'wednesday' => 'Wednesday', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturday' => 'Saturday', 'sunday' => 'Sunday'] as $dayKey => $dayLabel)
+                            <div class="p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 {{ empty($workingHours[$dayKey]['is_working']) ? 'bg-gray-50/70 opacity-70' : 'bg-white' }}">
+                                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                                    <input type="checkbox" wire:model="workingHours.{{ $dayKey }}.is_working"
+                                           class="rounded border-gray-300 text-rose-600 focus:ring-rose-500">
+                                    <span class="text-sm font-semibold text-gray-800">{{ $dayLabel }}</span>
+                                </label>
+                                @if (!empty($workingHours[$dayKey]['is_working']))
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <input type="time" wire:model="workingHours.{{ $dayKey }}.start"
+                                               class="rounded-lg border-gray-300 text-xs py-1 px-2 focus:ring-rose-500 focus:border-rose-500">
+                                        <span class="text-gray-400">to</span>
+                                        <input type="time" wire:model="workingHours.{{ $dayKey }}.end"
+                                               class="rounded-lg border-gray-300 text-xs py-1 px-2 focus:ring-rose-500 focus:border-rose-500">
+                                    </div>
+                                @else
+                                    <span class="text-xs text-gray-400 italic">Off duty</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
-            </div>
+            @endif
 
-            <div>
-                <x-input-label value="Calendar colour" />
-                <p class="mt-1 text-xs text-gray-500">Shown on the diary so you can tell staff apart at a glance.</p>
+            @if ($activeTab === 'timeoff')
+                <div class="space-y-4">
+                    <p class="text-xs text-gray-500">Block vacation, medical leave, or personal time off. Appointments cannot be booked during these times.</p>
 
-                <div class="mt-2 flex flex-wrap gap-2">
-                    @foreach ($colors as $hex => $label)
-                        {{-- The swatch is 32px but the button around it is a 44px target,
-                             so a thumb picks the colour it meant to pick. --}}
-                        <button type="button" wire:click="$set('color', '{{ $hex }}')"
-                                title="{{ $label }}" aria-label="{{ $label }}"
-                                aria-pressed="{{ $color === $hex ? 'true' : 'false' }}"
-                                class="inline-flex min-h-touch min-w-touch items-center justify-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
-                            <span class="h-8 w-8 rounded-full ring-offset-2 transition {{ $color === $hex ? 'ring-2 ring-gray-900' : '' }}"
-                                  style="background-color: {{ $hex }}"></span>
-                        </button>
-                    @endforeach
+                    <!-- Add Time Off Card -->
+                    <div class="p-3.5 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+                        <div class="font-semibold text-xs text-gray-800">Add Leave or Time Off</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="text-[11px] font-medium text-gray-600 block mb-1">Date</label>
+                                <input type="date" wire:model="newTimeOffDate"
+                                       class="w-full text-xs rounded-lg border-gray-300 py-1.5 px-2.5 focus:ring-rose-500 focus:border-rose-500">
+                                <x-input-error :messages="$errors->get('newTimeOffDate')" class="mt-1" />
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-medium text-gray-600 block mb-1">Reason</label>
+                                <input type="text" wire:model="newTimeOffReason" placeholder="e.g. Annual Leave, Doctor"
+                                       class="w-full text-xs rounded-lg border-gray-300 py-1.5 px-2.5 focus:ring-rose-500 focus:border-rose-500">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-1">
+                            <label class="inline-flex items-center gap-2 cursor-pointer text-xs text-gray-700">
+                                <input type="checkbox" wire:model.live="newTimeOffAllDay" class="rounded border-gray-300 text-rose-600 focus:ring-rose-500">
+                                <span>All day absence</span>
+                            </label>
+
+                            @if(!$newTimeOffAllDay)
+                                <div class="flex items-center gap-2 text-xs">
+                                    <input type="time" wire:model="newTimeOffStart" class="rounded-lg border-gray-300 text-xs py-1 px-2">
+                                    <span class="text-gray-400">to</span>
+                                    <input type="time" wire:model="newTimeOffEnd" class="rounded-lg border-gray-300 text-xs py-1 px-2">
+                                </div>
+                            @endif
+
+                            <button type="button" wire:click="addTimeOff"
+                                    class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors">
+                                + Add Block
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- List of Scheduled Time Off -->
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-700">Scheduled Leaves &amp; Absences ({{ count($timeOffList) }})</div>
+                        @if(empty($timeOffList))
+                            <p class="text-xs text-gray-400 italic">No time-off or vacations scheduled for this specialist.</p>
+                        @else
+                            <div class="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden bg-white max-h-48 overflow-y-auto">
+                                @foreach($timeOffList as $idx => $off)
+                                    <div class="p-2.5 flex items-center justify-between text-xs hover:bg-gray-50">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-amber-600 font-bold">&#127796;</span>
+                                            <div>
+                                                <div class="font-semibold text-gray-900">{{ \Illuminate\Support\Carbon::parse($off['date'])->format('D, j M Y') }}</div>
+                                                <div class="text-[11px] text-gray-500">
+                                                    {{ $off['reason'] }} &middot; {{ !empty($off['all_day']) ? 'Full Day' : ($off['start'].' - '.$off['end']) }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" wire:click="removeTimeOff({{ $idx }})"
+                                                class="text-red-500 hover:text-red-700 p-1 text-xs font-semibold">
+                                            Remove
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 </div>
-
-                <x-input-error :messages="$errors->get('color')" class="mt-2" />
-            </div>
-
-            <label class="flex min-h-touch items-start gap-3 rounded-lg bg-gray-50 p-3">
-                <input type="checkbox" wire:model="active"
-                       class="mt-0.5 h-5 w-5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
-                <span class="text-sm text-gray-700">
-                    Available to book
-                    <span class="block text-xs text-gray-500">
-                        Untick when someone leaves. Their past bookings stay on the record,
-                        so your takings history doesn't change.
-                    </span>
-                </span>
-            </label>
+            @endif
         </x-form-modal>
     @endif
 </div>

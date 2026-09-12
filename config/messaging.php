@@ -116,6 +116,7 @@ return [
 
             Your appointment is tomorrow, {{appointment_date}} at {{appointment_time}}.
             Service: {{service_name}}
+            Reply YES to confirm or CANCEL if you cannot make it.
             Need to change it? Call {{business_phone}}.
             TXT,
     ],
@@ -142,21 +143,38 @@ return [
         // build the customer link https://t.me/<username>?start=<token>.
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
 
-        /*
-         * A random string that becomes part of the webhook URL and is sent back
-         * by Telegram in a header. The webhook route is necessarily public, so
-         * this is what stops anyone who guesses the path from posting fake
-         * updates and linking their own chat to somebody else's customer.
-         *
-         * Not needed for local development, which uses telegram:poll instead.
-         */
+        // The secret Telegram returns in X-Telegram-Bot-Api-Secret-Token on
+        // every webhook call. Without this, anyone who knows the URL can post
+        // fake updates and link their own chat to another salon's customers.
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
 
+        // Base URL for API calls. Defaults to the real Telegram servers; change
+        // this only when testing against a local mock bot server.
         'api_url' => 'https://api.telegram.org',
 
         // Seconds. The dispatcher sends up to 50 of these in one cron minute, so
         // a hung request must not take the whole run down with it.
         'timeout' => (int) env('TELEGRAM_TIMEOUT', 10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp (Meta Cloud API)
+    |--------------------------------------------------------------------------
+    |
+    | Delivers automated appointment reminders via Meta's WhatsApp Cloud API.
+    | A business can also supply its own dedicated credentials via the
+    | channel_connections table.
+    |
+    */
+
+    'whatsapp' => [
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
+        'webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
+        'api_url' => env('WHATSAPP_API_URL', 'https://graph.facebook.com/v19.0'),
+        'timeout' => (int) env('WHATSAPP_TIMEOUT', 10),
     ],
 
 ];

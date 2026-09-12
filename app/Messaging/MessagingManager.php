@@ -3,8 +3,10 @@
 namespace App\Messaging;
 
 use App\Messaging\Contracts\MessageDriver;
+use App\Messaging\Drivers\EmailDriver;
 use App\Messaging\Drivers\LogDriver;
 use App\Messaging\Drivers\TelegramBotDriver;
+use App\Messaging\Drivers\WhatsAppCloudApiDriver;
 use App\Models\Business;
 use App\Models\ChannelConnection;
 use App\Support\Channel;
@@ -35,6 +37,8 @@ class MessagingManager
      */
     protected const DRIVERS = [
         'telegram' => TelegramBotDriver::class,
+        'whatsapp' => WhatsAppCloudApiDriver::class,
+        'email' => EmailDriver::class,
     ];
 
     public function supports(string $channel): bool
@@ -71,6 +75,8 @@ class MessagingManager
 
         return match ($channel) {
             'telegram' => new TelegramBotDriver($business, $this->connection($business, $channel)),
+            'whatsapp' => new WhatsAppCloudApiDriver($business, $this->connection($business, $channel)),
+            'email' => new EmailDriver($business, $this->connection($business, $channel)),
         };
     }
 

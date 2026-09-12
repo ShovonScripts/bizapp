@@ -44,6 +44,24 @@ class UpdateHandler
             return $this->reply($chatId, $this->stop($chatId));
         }
 
+        $customer = Customer::withoutGlobalScope('business')
+            ->where('telegram_chat_id', (string) $chatId)
+            ->first();
+
+        if ($customer) {
+            $handler = app(\App\Messaging\Interactive\AppointmentResponseHandler::class);
+            $intent = $handler->detectIntent($text);
+
+            if ($intent !== \App\Messaging\Interactive\AppointmentResponseHandler::INTENT_UNKNOWN) {
+                return $this->reply($chatId, $handler->handle($customer, $text));
+            }
+
+            return $this->reply(
+                $chatId,
+                "I only send appointment reminders. Reply YES to confirm your booking, CANCEL if you cannot make it, or send /stop to turn them off."
+            );
+        }
+
         return $this->reply(
             $chatId,
             "I only send appointment reminders. Send /stop at any time to turn them off."

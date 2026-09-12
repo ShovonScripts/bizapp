@@ -256,6 +256,28 @@ class ReminderPlannerTest extends TestCase
      */
     public function test_a_channel_we_do_not_support_yet_is_recorded_not_ignored(): void
     {
+        $smsCustomer = Customer::factory()->forBusiness($this->salon)->create([
+            'preferred_channel' => 'sms',
+            'phone' => '+447700900301',
+        ]);
+
+        $this->bookingAt('2026-07-16 14:00', [], $smsCustomer);
+        $this->plan();
+
+        $message = $this->messages()->sole();
+
+        $this->assertSame(ScheduledMessage::SKIPPED, $message->status);
+        $this->assertSame('SMS messages are not available yet.', $message->error);
+    }
+
+    public function test_whatsapp_channel_supported_but_not_connected_records_actionable_error(): void
+    {
+        config([
+            'messaging.driver' => null,
+            'messaging.whatsapp.access_token' => null,
+            'messaging.whatsapp.phone_number_id' => null,
+        ]);
+
         $whatsapp = Customer::factory()->forBusiness($this->salon)->create([
             'preferred_channel' => 'whatsapp',
             'whatsapp_number' => '+447700900301',
@@ -267,7 +289,7 @@ class ReminderPlannerTest extends TestCase
         $message = $this->messages()->sole();
 
         $this->assertSame(ScheduledMessage::SKIPPED, $message->status);
-        $this->assertSame('WhatsApp messages are not available yet.', $message->error);
+        $this->assertSame('WhatsApp is not connected for this business yet.', $message->error);
     }
 
     /* ------------------------------ Timing ------------------------------- */
