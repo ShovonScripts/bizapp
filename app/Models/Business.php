@@ -162,6 +162,20 @@ class Business extends Model
 
     public function stripeConfig(): array
     {
+        $connection = $this->channelConnections()
+            ->where('channel', 'stripe')
+            ->active()
+            ->first();
+
+        if ($connection) {
+            return [
+                'secret_key' => $connection->credential('secret_key'),
+                'publishable_key' => $connection->credential('publishable_key'),
+                'webhook_secret' => $connection->credential('webhook_secret'),
+                'test_mode' => (bool) ($connection->meta['test_mode'] ?? true),
+            ];
+        }
+
         return [
             'secret_key' => $this->setting('stripe.secret_key', config('services.stripe.secret')),
             'publishable_key' => $this->setting('stripe.publishable_key', config('services.stripe.key')),

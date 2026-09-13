@@ -85,7 +85,10 @@ class StripePaymentService
                 ];
             }
 
-            Log::error('[Stripe] Failed to create checkout session', ['error' => $response->body()]);
+            Log::error('[Stripe] Failed to create checkout session', [
+                'status' => $response->status(),
+                'body_length' => strlen($response->body()),
+            ]);
         } catch (\Throwable $e) {
             Log::error('[Stripe] Exception creating checkout session', ['message' => $e->getMessage()]);
         }

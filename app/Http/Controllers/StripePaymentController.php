@@ -44,7 +44,9 @@ class StripePaymentController extends Controller
                             )
                         );
                     } catch (\Throwable $e) {
-                        Log::warning('[StripeController] Failed sending confirmation email', ['error' => $e->getMessage()]);
+                        Log::warning('[StripeController] Failed sending confirmation email', [
+                            'exception' => $e::class,
+                        ]);
                     }
                 }
             }

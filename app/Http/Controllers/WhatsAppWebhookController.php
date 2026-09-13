@@ -139,7 +139,10 @@ class WhatsAppWebhookController
         }
 
         if (! $business) {
-            Log::info('[whatsapp] Inbound message received from number with no matching business phone_number_id', ['from' => $digits, 'phone_number_id' => $phoneNumberId]);
+            Log::info('[whatsapp] Inbound message received from number with no matching business phone_number_id', [
+                'from_hash' => hash('sha256', $digits),
+                'phone_number_id' => $phoneNumberId,
+            ]);
             return;
         }
 
@@ -153,12 +156,19 @@ class WhatsAppWebhookController
         })->first();
 
         if (! $customer || ! $customer->business) {
-            Log::info('[whatsapp] Inbound message received from unlinked number', ['from' => $digits, 'business_id' => $business->id]);
+            Log::info('[whatsapp] Inbound message received from unlinked number', [
+                'from_hash' => hash('sha256', $digits),
+                'business_id' => $business->id,
+            ]);
             return;
         }
 
         if ((int) $customer->business_id !== (int) $business->id) {
-            Log::info('[whatsapp] Inbound message from number belonging to another business', ['from' => $digits, 'business_id' => $business->id, 'customer_business_id' => $customer->business_id]);
+            Log::info('[whatsapp] Inbound message from number belonging to another business', [
+                'from_hash' => hash('sha256', $digits),
+                'business_id' => $business->id,
+                'customer_business_id' => $customer->business_id,
+            ]);
             return;
         }
 

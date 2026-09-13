@@ -142,18 +142,51 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
             'type' => $this->deposit_type,
             'value' => (float) $this->deposit_value,
         ];
-        $settings['stripe'] = [
-            'secret_key' => trim((string) $this->stripe_secret_key) ?: null,
-            'publishable_key' => trim((string) $this->stripe_publishable_key) ?: null,
-            'webhook_secret' => trim((string) $this->stripe_webhook_secret) ?: null,
-            'test_mode' => (bool) $this->stripe_test_mode,
-        ];
 
         $business->settings = $settings;
         $business->save();
 
+        $this->upsertStripeChannel();
+
         $this->phone = Phone::forHumans($normalizedPhone) ?? $normalizedPhone;
         $this->toast('Business settings updated successfully.');
+    }
+
+    protected function upsertStripeChannel(): void
+    {
+        $business = $this->business();
+        $secretKey = trim((string) $this->stripe_secret_key);
+        $publishableKey = trim((string) $this->stripe_publishable_key);
+        $webhookSecret = trim((string) $this->stripe_webhook_secret);
+
+        if ($secretKey === '' && $publishableKey === '' && $webhookSecret === '') {
+            $business->channelConnections()
+                ->where('channel', 'stripe')
+                ->update(['status' => \App\Models\ChannelConnection::FAILED]);
+            return;
+        }
+
+        $connection = $business->channelConnections()
+            ->where('channel', 'stripe')
+            ->first();
+
+        if (! $connection) {
+            $connection = new \App\Models\ChannelConnection();
+            $connection->business_id = $business->id;
+            $connection->channel = 'stripe';
+            $connection->status = \App\Models\ChannelConnection::ACTIVE;
+        }
+
+        $connection->credentials = [
+            'secret_key' => $secretKey ?: null,
+            'publishable_key' => $publishableKey ?: null,
+            'webhook_secret' => $webhookSecret ?: null,
+        ];
+        $connection->meta = [
+            'test_mode' => (bool) $this->stripe_test_mode,
+        ];
+        $connection->status = \App\Models\ChannelConnection::ACTIVE;
+        $connection->save();
     }
 }; ?>
 
