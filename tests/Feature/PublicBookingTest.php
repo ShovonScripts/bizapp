@@ -237,4 +237,80 @@ class PublicBookingTest extends TestCase
             ->set('customer_phone', '07700 900999')
             ->call('submitBooking');
     }
+
+    public function test_public_booking_logs_marketing_consent_when_customer_opt_in(): void
+    {
+        $business = Business::factory()->create([
+            'name' => 'Consent Salon',
+            'slug' => 'consent-salon',
+            'timezone' => 'Europe/London',
+        ]);
+
+        $service = Service::factory()->for($business)->create([
+            'name' => 'Test Service',
+            'price' => 30.00,
+            'duration_minutes' => 30,
+            'active' => true,
+        ]);
+
+        $staff = StaffMember::factory()->for($business)->create(['active' => true]);
+        $tomorrow = Carbon::now()->addDay()->toDateString();
+
+        Volt::test('booking.public', ['slug' => 'consent-salon'])
+            ->call('selectService', $service->id)
+            ->call('selectStaff', $staff->id)
+            ->call('selectDate', $tomorrow)
+            ->call('selectTime', '10:00')
+            ->set('customer_name', 'Consent Tester')
+            ->set('customer_phone', '07700 900999')
+            ->set('marketing_consent', true)
+            ->call('submitBooking')
+            ->assertSet('step', 5);
+
+        Tenant::for($business->id, function () {
+            $customer = Customer::where('phone', '+447700900999')->first();
+            $this->assertNotNull($customer);
+            $this->assertTrue($customer->marketing_consent);
+            $this->assertNotNull($customer->consent_at);
+            $this->assertEquals('booking_form', $customer->consent_source);
+        });
+    }
+
+    public function test_public_booking_does_not_record_consent_when_box_is_left_unticked(): void
+    {
+        $business = Business::factory()->create([
+            'name' => 'No Consent Salon',
+            'slug' => 'no-consent-salon',
+            'timezone' => 'Europe/London',
+        ]);
+
+        $service = Service::factory()->for($business)->create([
+            'name' => 'Test Service',
+            'price' => 30.00,
+            'duration_minutes' => 30,
+            'active' => true,
+        ]);
+
+        $staff = StaffMember::factory()->for($business)->create(['active' => true]);
+        $tomorrow = Carbon::now()->addDay()->toDateString();
+
+        // marketing_consent is deliberately never set - this asserts the default.
+        Volt::test('booking.public', ['slug' => 'no-consent-salon'])
+            ->call('selectService', $service->id)
+            ->call('selectStaff', $staff->id)
+            ->call('selectDate', $tomorrow)
+            ->call('selectTime', '10:00')
+            ->set('customer_name', 'Silent Tester')
+            ->set('customer_phone', '07700 900998')
+            ->call('submitBooking')
+            ->assertSet('step', 5);
+
+        Tenant::for($business->id, function () {
+            $customer = Customer::where('phone', '+447700900998')->first();
+            $this->assertNotNull($customer, 'Booking must still succeed without marketing consent.');
+            $this->assertFalse((bool) $customer->marketing_consent);
+            $this->assertNull($customer->consent_at);
+            $this->assertNull($customer->consent_source);
+        });
+    }
 }

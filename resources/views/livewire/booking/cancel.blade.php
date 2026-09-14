@@ -1,14 +1,5 @@
 <div class="mx-auto max-w-lg">
-    @if ($invalid)
-        <div class="rounded-2xl border border-gray-200 bg-white p-8 text-center">
-            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </div>
-            <h1 class="mt-4 text-xl font-semibold text-gray-900">Link expired or invalid</h1>
-            <p class="mt-2 text-sm text-gray-600">This cancellation link is no longer valid. The appointment may have already been cancelled, or the link was incorrect.</p>
-            <p class="mt-4 text-sm text-gray-600">Need help? Call <span class="font-medium text-gray-900">{{ $business->phone ?? $business->name }}</span>.</p>
-        </div>
-    @elseif ($confirmed)
+    @if ($confirmed)
         <div class="rounded-2xl border border-gray-200 bg-white p-8 text-center">
             <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
                 <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>

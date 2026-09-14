@@ -43,6 +43,10 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
     public ?string $stripe_webhook_secret = null;
     public bool $stripe_test_mode = true;
 
+    /* Whether a secret is already stored - never the secret itself. */
+    public bool $stripe_secret_key_set = false;
+    public bool $stripe_webhook_secret_set = false;
+
     public function mount(): void
     {
         $this->guardTenant();
@@ -71,9 +75,19 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
         $this->deposit_type = $business->depositType();
         $this->deposit_value = (string) $business->depositValue();
         $stripe = $business->stripeConfig();
-        $this->stripe_secret_key = $stripe['secret_key'];
+        /*
+         * Publishable key is public by design, so it can round-trip to the
+         * browser. The secret key and webhook secret must NOT: Livewire
+         * serialises every public property into the wire:snapshot rendered in
+         * the page, so hydrating them here would ship the decrypted secret to
+         * the client on every load. Leave them blank and treat blank on save
+         * as "keep what is stored".
+         */
         $this->stripe_publishable_key = $stripe['publishable_key'];
-        $this->stripe_webhook_secret = $stripe['webhook_secret'];
+        $this->stripe_secret_key = null;
+        $this->stripe_webhook_secret = null;
+        $this->stripe_secret_key_set = filled($stripe['secret_key']);
+        $this->stripe_webhook_secret_set = filled($stripe['webhook_secret']);
         $this->stripe_test_mode = $stripe['test_mode'];
     }
 
@@ -159,34 +173,56 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
         $publishableKey = trim((string) $this->stripe_publishable_key);
         $webhookSecret = trim((string) $this->stripe_webhook_secret);
 
-        if ($secretKey === '' && $publishableKey === '' && $webhookSecret === '') {
-            $business->channelConnections()
-                ->where('channel', 'stripe')
-                ->update(['status' => \App\Models\ChannelConnection::FAILED]);
-            return;
-        }
-
         $connection = $business->channelConnections()
             ->where('channel', 'stripe')
             ->first();
+
+        /*
+         * The secret fields arrive blank on every page load by design (mount
+         * does not hydrate them), so blank means "leave the stored value
+         * alone" - NOT "clear it". Without this, saving an unrelated field
+         * like the phone number would wipe a working Stripe connection.
+         */
+        $storedSecret = (string) ($connection?->credential('secret_key') ?? '');
+        $storedWebhook = (string) ($connection?->credential('webhook_secret') ?? '');
+
+        $effectiveSecret = $secretKey !== '' ? $secretKey : $storedSecret;
+        $effectiveWebhook = $webhookSecret !== '' ? $webhookSecret : $storedWebhook;
+
+        if ($effectiveSecret === '' && $publishableKey === '' && $effectiveWebhook === '') {
+            if ($connection) {
+                $connection->status = \App\Models\ChannelConnection::FAILED;
+                $connection->save();
+            }
+
+            $this->stripe_secret_key_set = false;
+            $this->stripe_webhook_secret_set = false;
+
+            return;
+        }
 
         if (! $connection) {
             $connection = new \App\Models\ChannelConnection();
             $connection->business_id = $business->id;
             $connection->channel = 'stripe';
-            $connection->status = \App\Models\ChannelConnection::ACTIVE;
         }
 
         $connection->credentials = [
-            'secret_key' => $secretKey ?: null,
+            'secret_key' => $effectiveSecret ?: null,
             'publishable_key' => $publishableKey ?: null,
-            'webhook_secret' => $webhookSecret ?: null,
+            'webhook_secret' => $effectiveWebhook ?: null,
         ];
         $connection->meta = [
             'test_mode' => (bool) $this->stripe_test_mode,
         ];
         $connection->status = \App\Models\ChannelConnection::ACTIVE;
         $connection->save();
+
+        /* Clear the inputs; keep only the "is set" signal. */
+        $this->stripe_secret_key = null;
+        $this->stripe_webhook_secret = null;
+        $this->stripe_secret_key_set = filled($effectiveSecret);
+        $this->stripe_webhook_secret_set = filled($effectiveWebhook);
     }
 }; ?>
 

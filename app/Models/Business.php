@@ -167,20 +167,20 @@ class Business extends Model
             ->active()
             ->first();
 
-        if ($connection) {
+        if (! $connection) {
             return [
-                'secret_key' => $connection->credential('secret_key'),
-                'publishable_key' => $connection->credential('publishable_key'),
-                'webhook_secret' => $connection->credential('webhook_secret'),
-                'test_mode' => (bool) ($connection->meta['test_mode'] ?? true),
+                'secret_key' => '',
+                'publishable_key' => '',
+                'webhook_secret' => '',
+                'test_mode' => true,
             ];
         }
 
         return [
-            'secret_key' => $this->setting('stripe.secret_key', config('services.stripe.secret')),
-            'publishable_key' => $this->setting('stripe.publishable_key', config('services.stripe.key')),
-            'webhook_secret' => $this->setting('stripe.webhook_secret', config('services.stripe.webhook_secret')),
-            'test_mode' => (bool) $this->setting('stripe.test_mode', true),
+            'secret_key' => $connection->credential('secret_key'),
+            'publishable_key' => $connection->credential('publishable_key'),
+            'webhook_secret' => $connection->credential('webhook_secret'),
+            'test_mode' => (bool) ($connection->meta['test_mode'] ?? true),
         ];
     }
 

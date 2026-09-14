@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Calendar\IcsGenerator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Livewire\Volt\Volt;
 use Tests\TestCase;
 
 class SecurityRegressionTest extends TestCase
@@ -281,5 +282,77 @@ class SecurityRegressionTest extends TestCase
         ], $payload);
 
         $response->assertStatus(403);
+    }
+
+    /* -------------------------- P0 #5: Cancellation token -------------------------- */
+
+    public function test_public_cancel_page_accepts_valid_token_and_cancels(): void
+    {
+        $appointment = Appointment::factory()->for($this->business)->create([
+            'customer_id' => $this->customer->id,
+            'service_id' => $this->service->id,
+            'staff_member_id' => $this->staff->id,
+            'status' => Appointment::CONFIRMED,
+        ]);
+
+        $response = $this->get(route('booking.cancel', [$this->business->slug, $appointment->cancellation_token]));
+        $response->assertOk()
+            ->assertSee('Cancel your booking')
+            ->assertSee($this->customer->name);
+
+        Volt::test('booking.cancel', ['slug' => $this->business->slug, 'token' => $appointment->cancellation_token])
+            ->call('cancel')
+            ->assertSet('confirmed', true);
+
+        $this->assertEquals(Appointment::CANCELLED, $appointment->refresh()->status);
+    }
+
+    public function test_public_cancel_page_rejects_invalid_token(): void
+    {
+        $response = $this->get(route('booking.cancel', [$this->business->slug, 'invalid-token']));
+        $response->assertStatus(404);
+    }
+
+    /* -------------------------- WhatsApp signature acceptance -------------------------- */
+
+    public function test_whatsapp_webhook_accepts_valid_signature(): void
+    {
+        config(['messaging.whatsapp.app_secret' => 'test-secret']);
+
+        $payload = json_encode([
+            'object' => 'whatsapp_business_account',
+            'entry' => [
+                [
+                    'id' => 'WABA_123',
+                    'changes' => [
+                        [
+                            'field' => 'messages',
+                            'value' => [
+                                'messaging_product' => 'whatsapp',
+                                'phone_number_id' => '10987654321',
+                                'messages' => [
+                                    [
+                                        'from' => '447700900555',
+                                        'id' => 'wamid.Valid123',
+                                        'timestamp' => '1720000000',
+                                        'type' => 'text',
+                                        'text' => ['body' => 'YES'],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $signature = 'sha256=' . hash_hmac('sha256', $payload, 'test-secret');
+
+        $response = $this->call('POST', '/whatsapp/webhook', [], [], [], [
+            'HTTP_X_Hub_Signature_256' => $signature,
+            'CONTENT_TYPE' => 'application/json',
+        ], $payload);
+
+        $response->assertOk();
     }
 }

@@ -46,8 +46,6 @@ class SiteSettings
 
             // Platform Stripe Gateway Credentials
             'stripe_publishable_key' => config('services.stripe.key', ''),
-            'stripe_secret_key' => config('services.stripe.secret', ''),
-            'stripe_webhook_secret' => config('services.stripe.webhook_secret', ''),
             'stripe_test_mode' => true,
             'stripe_currency' => 'gbp',
 
@@ -174,8 +172,6 @@ class SiteSettings
     {
         return [
             'publishable_key' => static::get('stripe_publishable_key', config('services.stripe.key', '')),
-            'secret_key' => static::get('stripe_secret_key', config('services.stripe.secret', '')),
-            'webhook_secret' => static::get('stripe_webhook_secret', config('services.stripe.webhook_secret', '')),
             'test_mode' => (bool) static::get('stripe_test_mode', true),
             'currency' => static::get('stripe_currency', 'gbp'),
         ];

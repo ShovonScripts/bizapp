@@ -30,8 +30,6 @@ class PricingAndStripeTest extends TestCase
             ->set('planBillingPeriod', 'month')
             ->set('planAnnualDiscount', '25')
             ->set('stripePublishableKey', 'pk_test_mock_superadmin_pub')
-            ->set('stripeSecretKey', 'sk_test_mock_superadmin_sec')
-            ->set('stripeWebhookSecret', 'whsec_mock_superadmin')
             ->set('stripeTestMode', true)
             ->set('stripeCurrency', 'gbp')
             ->call('savePricingAndStripe')
@@ -41,8 +39,6 @@ class PricingAndStripeTest extends TestCase
         $this->assertEquals('49', SiteSettings::get('plan_growth_price'));
         $this->assertEquals('89', SiteSettings::get('plan_business_price'));
         $this->assertEquals('pk_test_mock_superadmin_pub', SiteSettings::get('stripe_publishable_key'));
-        $this->assertEquals('sk_test_mock_superadmin_sec', SiteSettings::get('stripe_secret_key'));
-        $this->assertEquals('whsec_mock_superadmin', SiteSettings::get('stripe_webhook_secret'));
         $this->assertTrue(SiteSettings::get('stripe_test_mode'));
     }
 

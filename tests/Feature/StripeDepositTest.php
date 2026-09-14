@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Appointment;
 use App\Models\Business;
+use App\Models\ChannelConnection;
 use App\Models\Customer;
 use App\Models\Service;
 use App\Models\StaffMember;
@@ -42,11 +43,21 @@ class StripeDepositTest extends TestCase
                     'type' => 'percentage',
                     'value' => 20.00, // 20%
                 ],
-                'stripe' => [
-                    'test_mode' => true,
-                    'secret_key' => 'sk_test_fake_key_for_http_fake',
-                ],
             ],
+        ]);
+
+        ChannelConnection::create([
+            'business_id' => $this->business->id,
+            'channel' => 'stripe',
+            'credentials' => [
+                'secret_key' => 'sk_test_fake_key_for_http_fake',
+                'publishable_key' => 'pk_test_fake',
+                'webhook_secret' => 'whsec_fake',
+            ],
+            'meta' => [
+                'test_mode' => true,
+            ],
+            'status' => ChannelConnection::ACTIVE,
         ]);
 
         $this->owner = User::factory()->create([
@@ -261,5 +272,64 @@ class StripeDepositTest extends TestCase
         $this->assertTrue($this->business->depositEnabled());
         $this->assertEquals('fixed', $this->business->depositType());
         $this->assertEquals(25.00, $this->business->depositValue());
+    }
+
+    public function test_settings_screen_never_sends_the_stripe_secret_to_the_browser(): void
+    {
+        $this->actingAs($this->owner);
+
+        $connection = ChannelConnection::where('business_id', $this->business->id)
+            ->where('channel', 'stripe')
+            ->firstOrFail();
+
+        $connection->credentials = [
+            'secret_key' => 'sk_test_supersecretvalue',
+            'publishable_key' => 'pk_test_public',
+            'webhook_secret' => 'whsec_supersecretvalue',
+        ];
+        $connection->meta = ['test_mode' => true];
+        $connection->status = ChannelConnection::ACTIVE;
+        $connection->save();
+
+        $component = Volt::test('settings.index');
+
+        /* The secret must not be hydrated into any public property. */
+        $component->assertSet('stripe_secret_key', null)
+            ->assertSet('stripe_webhook_secret', null)
+            ->assertSet('stripe_secret_key_set', true)
+            ->assertSet('stripe_webhook_secret_set', true);
+
+        /*
+         * Nor appear in the page. Note the third argument: assertDontSee
+         * defaults to $stripInitialData = true, which strips the wire:snapshot
+         * out of the HTML before asserting - so the default would pass even
+         * if the secret were sitting in the snapshot. false keeps it in scope,
+         * which is the whole point of this test.
+         */
+        $component->assertDontSee('sk_test_supersecretvalue', true, false)
+            ->assertDontSee('whsec_supersecretvalue', true, false);
+
+        /* Publishable key is public by design and may round-trip. */
+        $component->assertSet('stripe_publishable_key', 'pk_test_public');
+
+        /*
+         * Saving with the secret fields blank - which is how every save after
+         * the first one looks - must keep the stored secrets, not wipe them.
+         */
+        $component->set('deposit_enabled', true)
+            ->set('deposit_type', 'fixed')
+            ->set('deposit_value', '10.00')
+            ->call('save');
+
+        $connection->refresh();
+        $this->assertSame('sk_test_supersecretvalue', $connection->credential('secret_key'));
+        $this->assertSame('whsec_supersecretvalue', $connection->credential('webhook_secret'));
+        $this->assertSame(ChannelConnection::ACTIVE, $connection->status);
+
+        /* And the stored secret must still be encrypted at rest. */
+        $raw = (string) \Illuminate\Support\Facades\DB::table('channel_connections')
+            ->where('id', $connection->id)
+            ->value('credentials');
+        $this->assertStringNotContainsString('sk_test_supersecretvalue', $raw);
     }
 }

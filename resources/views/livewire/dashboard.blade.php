@@ -68,11 +68,8 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
     public string $planAnnualDiscount = '20';
 
     public string $stripePublishableKey = '';
-    public string $stripeSecretKey = '';
-    public string $stripeWebhookSecret = '';
     public bool $stripeTestMode = true;
     public string $stripeCurrency = 'gbp';
-    public bool $showStripeSecret = false;
 
     public function mount(): void
     {
@@ -164,8 +161,6 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
         $this->planAnnualDiscount = (string) SiteSettings::get('plan_annual_discount', '20');
 
         $this->stripePublishableKey = (string) SiteSettings::get('stripe_publishable_key', config('services.stripe.key', ''));
-        $this->stripeSecretKey = (string) SiteSettings::get('stripe_secret_key', config('services.stripe.secret', ''));
-        $this->stripeWebhookSecret = (string) SiteSettings::get('stripe_webhook_secret', config('services.stripe.webhook_secret', ''));
         $this->stripeTestMode = (bool) SiteSettings::get('stripe_test_mode', true);
         $this->stripeCurrency = (string) SiteSettings::get('stripe_currency', 'gbp');
     }
@@ -181,8 +176,6 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
             'planBillingPeriod' => ['required', 'string', 'in:month,year'],
             'planAnnualDiscount' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'stripePublishableKey' => ['nullable', 'string', 'max:255'],
-            'stripeSecretKey' => ['nullable', 'string', 'max:255'],
-            'stripeWebhookSecret' => ['nullable', 'string', 'max:255'],
             'stripeCurrency' => ['required', 'string', 'max:10'],
         ]);
 
@@ -193,8 +186,6 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
         SiteSettings::set('plan_annual_discount', $this->planAnnualDiscount);
 
         SiteSettings::set('stripe_publishable_key', trim($this->stripePublishableKey));
-        SiteSettings::set('stripe_secret_key', trim($this->stripeSecretKey));
-        SiteSettings::set('stripe_webhook_secret', trim($this->stripeWebhookSecret));
         SiteSettings::set('stripe_test_mode', (bool) $this->stripeTestMode);
         SiteSettings::set('stripe_currency', strtolower(trim($this->stripeCurrency)));
 
@@ -715,7 +706,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
 
                         {{-- Stripe Connection Badge --}}
                         <div>
-                            @if (!empty($stripePublishableKey) && !empty($stripeSecretKey))
+                            @if (!empty($stripePublishableKey))
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-xs">
                                     <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                     Stripe Connected ({{ $stripeTestMode ? 'Test Mode' : 'Live' }})
@@ -788,36 +779,10 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                     </select>
                                     <p class="text-[11px] text-gray-500 mt-1">Default 3-letter ISO currency code sent in Stripe checkout sessions.</p>
                                 </div>
-
-                                {{-- Secret Key --}}
-                                <div>
-                                    <div class="flex items-center justify-between mb-1.5">
-                                        <label class="block text-xs font-semibold text-gray-700">Stripe Secret Key</label>
-                                        <button type="button" wire:click="$toggle('showStripeSecret')" class="text-[11px] text-mulberry-700 hover:underline font-medium">
-                                            {{ $showStripeSecret ? 'Hide Key' : 'Reveal Key' }}
-                                        </button>
-                                    </div>
-                                    <input type="{{ $showStripeSecret ? 'text' : 'password' }}" wire:model="stripeSecretKey" placeholder="{{ $stripeTestMode ? 'sk_test_51...' : 'sk_live_51...' }}"
-                                           class="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-900 font-mono focus:border-mulberry-600 focus:ring-1 focus:ring-mulberry-600 shadow-xs" />
-                                    @error('stripeSecretKey') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
-                                    <p class="text-[11px] text-gray-500 mt-1">Restricted backend key. Grants API access to create charges and manage sessions.</p>
-                                </div>
-
-                                {{-- Webhook Signing Secret --}}
-                                <div>
-                                    <div class="flex items-center justify-between mb-1.5">
-                                        <label class="block text-xs font-semibold text-gray-700">Stripe Webhook Signing Secret</label>
-                                        <span class="text-[11px] text-gray-400 font-mono">whsec_...</span>
-                                    </div>
-                                    <input type="{{ $showStripeSecret ? 'text' : 'password' }}" wire:model="stripeWebhookSecret" placeholder="whsec_..."
-                                           class="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-900 font-mono focus:border-mulberry-600 focus:ring-1 focus:ring-mulberry-600 shadow-xs" />
-                                    @error('stripeWebhookSecret') <span class="text-xs text-red-600 mt-1 block">{{ $message }}</span> @enderror
-                                    <p class="text-[11px] text-gray-500 mt-1">Verifies inbound HMAC signatures from Stripe event notifications.</p>
-                                </div>
                             </div>
 
                             {{-- Webhook Listener URL Copy Box --}}
-                            <div class="mt-6 rounded-2xl bg-slate-50 border border-slate-200/80 p-4">
+                            <div class="mt-6 rounded-2xl bg-gray-50 border border-gray-200/80 p-4">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div>
                                         <span class="text-xs font-bold text-gray-800 flex items-center gap-1.5">

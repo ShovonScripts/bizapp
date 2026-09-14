@@ -6,10 +6,11 @@ use App\Models\Appointment;
 use App\Support\Tenant;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Url;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
-new #[Layout('layouts.booking')] #[Title('Cancel Appointment')] class extends Component
+#[Layout('layouts.booking')]
+#[Title('Cancel Appointment')]
+class Cancel extends Component
 {
     public string $slug = '';
     public ?int $businessId = null;
@@ -21,7 +22,6 @@ new #[Layout('layouts.booking')] #[Title('Cancel Appointment')] class extends Co
     public ?string $startTime = null;
 
     public bool $confirmed = false;
-    public bool $invalid = false;
 
     public function mount(string $slug, string $token): void
     {
@@ -39,8 +39,7 @@ new #[Layout('layouts.booking')] #[Title('Cancel Appointment')] class extends Co
             ->first();
 
         if (! $appointment || $appointment->status === \App\Models\Appointment::CANCELLED) {
-            $this->invalid = true;
-            return;
+            abort(404);
         }
 
         $this->appointmentId = $appointment->id;
@@ -61,8 +60,7 @@ new #[Layout('layouts.booking')] #[Title('Cancel Appointment')] class extends Co
             ->firstOrFail();
 
         if ($appointment->status === \App\Models\Appointment::CANCELLED) {
-            $this->invalid = true;
-            return;
+            abort(404);
         }
 
         $appointment->update([

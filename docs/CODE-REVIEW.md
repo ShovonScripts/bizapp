@@ -278,7 +278,7 @@ Transactional reminder contract basis-এ defensible, কিন্তু UK GDPR
 collect করার **মুহূর্তে** বলতে হয় কে রাখছে আর কেন।
 
 **করো:** submit button-এর পাশে `/privacy` link (page টা already আছে), আর
-`consent_source = 'online_booking'` + `consent_at` লেখো।
+`consent_source = 'booking_form'` + `consent_at` লেখো।
 **`marketing_consent` এই ফর্ম থেকে কখনো true করবে না।**
 
 ---

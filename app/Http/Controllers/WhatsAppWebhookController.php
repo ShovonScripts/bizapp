@@ -140,7 +140,7 @@ class WhatsAppWebhookController
 
         if (! $business) {
             Log::info('[whatsapp] Inbound message received from number with no matching business phone_number_id', [
-                'from_hash' => hash('sha256', $digits),
+                'from_ref' => $this->phoneRef($digits),
                 'phone_number_id' => $phoneNumberId,
             ]);
             return;
@@ -157,7 +157,7 @@ class WhatsAppWebhookController
 
         if (! $customer || ! $customer->business) {
             Log::info('[whatsapp] Inbound message received from unlinked number', [
-                'from_hash' => hash('sha256', $digits),
+                'from_ref' => $this->phoneRef($digits),
                 'business_id' => $business->id,
             ]);
             return;
@@ -165,7 +165,7 @@ class WhatsAppWebhookController
 
         if ((int) $customer->business_id !== (int) $business->id) {
             Log::info('[whatsapp] Inbound message from number belonging to another business', [
-                'from_hash' => hash('sha256', $digits),
+                'from_ref' => $this->phoneRef($digits),
                 'business_id' => $business->id,
                 'customer_business_id' => $customer->business_id,
             ]);
@@ -179,5 +179,18 @@ class WhatsAppWebhookController
         if ($driver->isConfigured()) {
             $driver->send($customer, $reply);
         }
+    }
+
+    /*
+     * A phone number is not anonymous once hashed. UK mobiles are a closed
+     * keyspace of about 10^9, so a plain sha256 of a number can be reversed
+     * by brute force in under an hour on one CPU core - which would make the
+     * log just as sensitive as storing the number itself. Keying the hash
+     * with APP_KEY removes that: without the key the digest cannot be
+     * reproduced, and it stays stable enough to correlate log lines.
+     */
+    private function phoneRef(string $digits): string
+    {
+        return substr(hash_hmac('sha256', $digits, (string) config('app.key')), 0, 12);
     }
 }

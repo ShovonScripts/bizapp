@@ -33,6 +33,7 @@ new #[Layout('layouts.booking')] #[Title('Online Booking')] class extends Compon
     public string $customer_phone = '';
     public string $customer_email = '';
     public ?string $notes = null;
+    public bool $marketing_consent = false;
 
     // Confirmation State
     public ?int $confirmedAppointmentId = null;
@@ -245,6 +246,7 @@ new #[Layout('layouts.booking')] #[Title('Online Booking')] class extends Compon
             'selectedDate' => ['required', 'date'],
             'selectedTime' => ['required', 'string'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'marketing_consent' => ['boolean'],
         ]);
 
         $business = $this->business();
@@ -321,10 +323,18 @@ new #[Layout('layouts.booking')] #[Title('Online Booking')] class extends Compon
                 $customer->preferred_channel = $business->defaultChannel();
                 $customer->ensureTelegramLinkToken();
                 $customer->save();
+
+                if ($this->marketing_consent) {
+                    $customer->recordConsent('booking_form');
+                }
             } else {
                 if (blank($customer->telegram_link_token)) {
                     $customer->ensureTelegramLinkToken();
                     $customer->save();
+                }
+
+                if ($this->marketing_consent && ! $customer->marketing_consent) {
+                    $customer->recordConsent('booking_form');
                 }
             }
 
@@ -749,54 +759,68 @@ new #[Layout('layouts.booking')] #[Title('Online Booking')] class extends Compon
 
             <form wire:submit="submitBooking" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Full Name <span class="text-rose-500">*</span>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Full Name <span class="text-red-500">*</span>
                     </label>
                     <input type="text"
                            wire:model="customer_name"
                            placeholder="e.g. Sarah Jenkins"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    @error('customer_name') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-500 focus:ring-mulberry-500" />
+                    @error('customer_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Mobile Phone Number <span class="text-rose-500">*</span>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Mobile Phone Number <span class="text-red-500">*</span>
                     </label>
                     <input type="tel"
                            wire:model="customer_phone"
                            placeholder="e.g. 07700 900123"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    <p class="text-[11px] text-slate-500 mt-1">We'll send your booking reminders to this phone number.</p>
-                    @error('customer_phone') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-500 focus:ring-mulberry-500" />
+                    <p class="text-[11px] text-gray-500 mt-1">We'll send your booking reminders to this phone number.</p>
+                    @error('customer_phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Email Address <span class="text-slate-400 font-normal">(Optional)</span>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Email Address <span class="text-gray-400 font-normal">(Optional)</span>
                     </label>
                     <input type="email"
                            wire:model="customer_email"
                            placeholder="sarah@example.com"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    @error('customer_email') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-500 focus:ring-mulberry-500" />
+                    @error('customer_email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Special Requests or Notes <span class="text-slate-400 font-normal">(Optional)</span>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Special Requests or Notes <span class="text-gray-400 font-normal">(Optional)</span>
                     </label>
                     <textarea wire:model="notes"
                               rows="2"
                               placeholder="Any preferences, allergies, or notes for your specialist..."
-                              class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-rose-500 focus:ring-rose-500"></textarea>
-                    @error('notes') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                              class="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-sm focus:border-mulberry-500 focus:ring-mulberry-500"></textarea>
+                    @error('notes') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
+
+                <div class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                    <input type="checkbox" id="marketing_consent" wire:model="marketing_consent"
+                           class="mt-0.5 h-4 w-4 rounded border-gray-300 text-mulberry-600 focus:ring-mulberry-500">
+                    <label for="marketing_consent" class="text-sm text-gray-700 cursor-pointer">
+                        Send me occasional offers and news.
+                        <span class="block text-xs text-gray-500 mt-0.5">Optional, and separate from your booking. Unsubscribe any time.</span>
+                    </label>
+                </div>
+
+                <p class="text-[11px] leading-relaxed text-gray-500">
+                    Booking confirmations and appointment reminders are always sent as part of your booking.
+                    See how we handle your details in our <a href="{{ route('privacy') }}" target="_blank" rel="noopener" class="font-medium text-gray-700 underline hover:text-mulberry-600">Privacy Policy</a>.
+                </p>
 
                 <div class="pt-2">
                     <button type="submit"
                             wire:loading.attr="disabled"
-                            class="w-full py-3.5 px-4 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-rose-600/25 transition-all flex items-center justify-center gap-2">
+                            class="w-full py-3.5 px-4 bg-gradient-to-r from-mulberry-700 to-mulberry-600 hover:from-mulberry-800 hover:to-mulberry-700 text-white font-bold rounded-xl shadow-lg shadow-mulberry-600/25 transition-all flex items-center justify-center gap-2">
                         <span wire:loading.remove>
                             @if($depositActive && $depositDue > 0)
                                 Pay Deposit &amp; Confirm &middot; &pound;{{ number_format($depositDue, 2) }}
