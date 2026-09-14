@@ -832,7 +832,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
         ---------------------------------------------------------------- --}}
         <div class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-0">
             <div>
-                <h1 class="text-xl font-semibold text-gray-900">
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900">
                     Diary
                     @if ($isToday)
                         <span class="ms-1 text-sm font-normal text-gray-500">— today</span>
@@ -870,7 +870,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
         {{-- ---------------------------------------------------------------
              Week strip — navigation and workload at a glance
         ---------------------------------------------------------------- --}}
-        <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 overflow-hidden">
+        <div class="rounded-card border border-gray-200 bg-white shadow-card overflow-hidden">
             <div class="flex items-center gap-2 border-b border-gray-100 p-3 relative">
                 {{-- These two arrows are how the diary is actually navigated, so they
                      get full targets rather than the 30px they had. --}}
@@ -1009,7 +1009,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
         {{-- ---------------------------------------------------------------
              Filters + the day itself
         ---------------------------------------------------------------- --}}
-        <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 overflow-hidden">
+        <div class="rounded-card border border-gray-200 bg-white shadow-card overflow-hidden">
 
             <div class="flex flex-wrap items-center gap-4 border-b border-gray-100 p-4">
                 <x-select-input wire:model.live="staffFilter" aria-label="Show one person's bookings">
@@ -1035,16 +1035,6 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                     @endif
                 </span>
             </div>
-
-            @php
-                /*
-                 * Every action in the expanded strip is a real 44px target. Defined
-                 * once here rather than inside the loop, where it would be rebuilt
-                 * for every booking on the day.
-                 */
-                $act = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600';
-                $actDanger = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600';
-            @endphp
 
             @if ($viewMode === 'columns')
                 {{-- -----------------------------------------------------------
@@ -1288,7 +1278,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                                                 Due £{{ number_format($appointment->balanceDue(), 2) }}
                                             </span>
                                         @elseif($appointment->deposit_required && $appointment->deposit_status === 'unpaid')
-                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-rose-100 text-rose-800">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200">
                                                 Deposit Unpaid (£{{ number_format($appointment->deposit_amount, 2) }})
                                             </span>
                                         @endif
@@ -1314,8 +1304,7 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                                             {{ $isPending ? 'Confirm' : 'Done' }}
                                         </button>
                                     @elseif ($appointment->isCancelled())
-                                        <button type="button" wire:click="setStatus({{ $appointment->id }}, 'confirmed')"
-                                                class="{{ $act }}">Put back in the diary</button>
+                                        <x-button variant="secondary" size="sm" type="button" wire:click="setStatus({{ $appointment->id }}, 'confirmed')">Put back in the diary</x-button>
                                     @endif
 
                                     <button type="button" wire:click="openReschedule({{ $appointment->id }})"
@@ -1342,11 +1331,11 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
                                  style="display: none"
                                  class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
 
-                                <button type="button" wire:click="edit({{ $appointment->id }})" class="{{ $act }}">Edit</button>
+                                <x-button variant="secondary" size="sm" type="button" wire:click="edit({{ $appointment->id }})">Edit</x-button>
 
-                                <button type="button" wire:click="openReschedule({{ $appointment->id }})" class="{{ $act }}">
+                                <x-button variant="secondary" size="sm" type="button" wire:click="openReschedule({{ $appointment->id }})">
                                     Reschedule
-                                </button>
+                                </x-button>
 
                                 @if(! $appointment->isFullyPaid())
                                     <button type="button" wire:click="markPaid({{ $appointment->id }})"
@@ -1358,26 +1347,20 @@ new #[Layout('layouts.app')] #[Title('Diary')] class extends Component
 
                                 @if ($isActive)
                                     @if ($isPending)
-                                        <button type="button" wire:click="setStatus({{ $appointment->id }}, 'completed')"
-                                                class="{{ $act }}">Done</button>
+                                        <x-button variant="secondary" size="sm" type="button" wire:click="setStatus({{ $appointment->id }}, 'completed')">Done</x-button>
                                     @endif
 
-                                    <button type="button" wire:click="setStatus({{ $appointment->id }}, 'no_show')"
-                                            class="{{ $act }}">Didn't turn up</button>
+                                    <x-button variant="secondary" size="sm" type="button" wire:click="setStatus({{ $appointment->id }}, 'no_show')">Didn't turn up</x-button>
 
-                                    <button type="button" wire:click="setStatus({{ $appointment->id }}, 'cancelled')"
-                                            wire:confirm="Cancel this appointment?"
-                                            class="{{ $act }}">Cancel</button>
+                                    <x-button variant="secondary" size="sm" type="button" wire:click="setStatus({{ $appointment->id }}, 'cancelled')" wire:confirm="Cancel this appointment?">Cancel</x-button>
                                 @endif
 
-                                <button type="button" wire:click="delete({{ $appointment->id }})"
-                                        wire:confirm="Remove this appointment from the diary?"
-                                        class="{{ $actDanger }}">Remove</button>
+                                <x-button variant="outline-danger" size="sm" type="button" wire:click="delete({{ $appointment->id }})" wire:confirm="Remove this appointment from the diary?">Remove</x-button>
                             </div>
                         </li>
                     @empty
                         <li class="px-4 py-16 text-center">
-                            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-rose-50 text-mulberry-700 mb-3 shadow-xs ring-1 ring-rose-100 transition-transform duration-300 hover:scale-105">
+                            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-mulberry-50 text-mulberry-700 mb-3 ring-1 ring-mulberry-100 transition-transform duration-300 hover:scale-105">
                                 <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                                 </svg>

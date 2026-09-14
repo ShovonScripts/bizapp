@@ -244,20 +244,21 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
     </div>
 
     <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-display">
-                Business Settings
-            </h1>
-            <p class="text-sm text-slate-500 mt-1">
-                Configure your public booking portal, opening hours, and automated messaging rules.
-            </p>
-        </div>
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900">
+                    Business Settings
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    Configure your public booking portal, opening hours, and automated messaging rules.
+                </p>
+            </div>
         <div>
             <button type="button"
                     wire:click="save"
                     wire:loading.attr="disabled"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold shadow-md shadow-rose-600/20 transition-all">
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-mulberry-700 hover:bg-mulberry-800 text-white text-sm font-semibold shadow-sm transition-all">
                 <span wire:loading.remove>Save Changes</span>
                 <span wire:loading class="flex items-center gap-2">
                     <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -272,36 +273,36 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
 
     <form wire:submit="save" class="space-y-8">
         <!-- SECTION 1: BUSINESS PROFILE & PUBLIC BRANDING -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
-            <div class="flex items-center gap-3 pb-4 border-b border-slate-100 mb-6">
-                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <div class="flex items-center gap-3 pb-4 border-b border-gray-100 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-mulberry-50 text-mulberry-700 flex items-center justify-center font-bold">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                 </div>
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Profile & Public Booking URL</h2>
-                    <p class="text-xs text-slate-500">Your salon brand name, contact numbers, and online booking link.</p>
+                    <h2 class="text-base font-bold text-gray-900">Profile & Public Booking URL</h2>
+                    <p class="text-xs text-gray-500">Your salon brand name, contact numbers, and online booking link.</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Business Name <span class="text-rose-500">*</span>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Business Name <span class="text-red-500">*</span>
                     </label>
                     <input type="text"
                            wire:model="name"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    @error('name') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
+                    @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Business Niche / Category
                     </label>
                     <select wire:model="niche"
-                            class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500">
+                            class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600">
                         <option value="Hair Salon">Hair Salon</option>
                         <option value="Barbershop">Barbershop</option>
                         <option value="Nail Studio">Nail Studio</option>
@@ -311,108 +312,108 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
                         <option value="Tattoo & Piercing">Tattoo & Piercing</option>
                         <option value="Other">Other Services</option>
                     </select>
-                    @error('niche') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                    @error('niche') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- Public Slug with Live Link Preview -->
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Online Booking URL Slug <span class="text-rose-500">*</span>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        Online Booking URL Slug <span class="text-red-500">*</span>
                     </label>
                     <div class="flex rounded-xl shadow-sm">
-                        <span class="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-xs sm:text-sm font-medium">
+                        <span class="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-xs sm:text-sm font-medium">
                             {{ url('/book') }}/
                         </span>
                         <input type="text"
                                wire:model="slug"
                                placeholder="your-salon-name"
-                               class="flex-1 min-w-0 block w-full px-3.5 py-2.5 rounded-none rounded-r-xl border border-slate-300 text-sm focus:border-rose-500 focus:ring-rose-500" />
+                               class="flex-1 min-w-0 block w-full px-3.5 py-2.5 rounded-none rounded-r-xl border border-gray-300 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
                     </div>
                     <div class="flex items-center justify-between mt-1.5">
-                        <p class="text-[11px] text-slate-500">Clients use this link to self-book online.</p>
+                        <p class="text-[11px] text-gray-500">Clients use this link to self-book online.</p>
                         @if($slug)
-                            <a href="{{ url('/book/'.$slug) }}" target="_blank" class="text-xs font-semibold text-rose-600 hover:text-rose-700 inline-flex items-center gap-1">
+                            <a href="{{ url('/book/'.$slug) }}" target="_blank" class="text-xs font-semibold text-mulberry-700 hover:text-mulberry-900 inline-flex items-center gap-1">
                                 Open Booking Page &rarr;
                             </a>
                         @endif
                     </div>
-                    @error('slug') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                    @error('slug') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Contact Phone Number
                     </label>
                     <input type="tel"
                            wire:model="phone"
                            placeholder="07700 900123"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    <p class="text-[11px] text-slate-500 mt-1">Displayed on customer booking confirmations and receipts.</p>
-                    @error('phone') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
+                    <p class="text-[11px] text-gray-500 mt-1">Displayed on customer booking confirmations and receipts.</p>
+                    @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Contact Email
                     </label>
                     <input type="email"
                            wire:model="email"
                            placeholder="salon@example.com"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    @error('email') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
+                    @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Physical Salon Address
                     </label>
                     <textarea wire:model="address"
                               rows="2"
                               placeholder="123 High Street, London, EC1A 1BB"
-                              class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-rose-500 focus:ring-rose-500"></textarea>
-                    @error('address') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                              class="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-sm focus:border-mulberry-600 focus:ring-mulberry-600"></textarea>
+                    @error('address') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
             </div>
         </div>
 
         <!-- SECTION 2: OPERATING HOURS & ONLINE BOOKING -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
-            <div class="flex items-center gap-3 pb-4 border-b border-slate-100 mb-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <div class="flex items-center gap-3 pb-4 border-b border-gray-100 mb-6">
                 <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Operating Hours & Booking Schedule</h2>
-                    <p class="text-xs text-slate-500">Defines when your doors are open and available time slots on the booking portal.</p>
+                    <h2 class="text-base font-bold text-gray-900">Operating Hours & Booking Schedule</h2>
+                    <p class="text-xs text-gray-500">Defines when your doors are open and available time slots on the booking portal.</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Daily Opening Time
                     </label>
                     <input type="time"
                            wire:model="opening_hours_from"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    @error('opening_hours_from') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
+                    @error('opening_hours_from') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Daily Closing Time
                     </label>
                     <input type="time"
                            wire:model="opening_hours_to"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    @error('opening_hours_to') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
+                    @error('opening_hours_to') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- Working Days Checkbox Pills -->
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                         Active Working Days
                     </label>
                     <div class="flex flex-wrap gap-2">
@@ -433,51 +434,51 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
                             @endphp
                             <button type="button"
                                     wire:click="toggleDay('{{ $code }}')"
-                                    class="px-4 py-2 rounded-xl text-xs font-bold border transition-all {{ $isActive ? 'bg-amber-500 border-amber-600 text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100' }}">
+                                    class="px-4 py-2 rounded-xl text-xs font-bold border transition-all {{ $isActive ? 'bg-amber-500 border-amber-600 text-white shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100' }}">
                                 {{ $label }}
                             </button>
                         @endforeach
                     </div>
-                    @error('opening_days') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                    @error('opening_days') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Time Slot Grid Interval
                     </label>
                     <select wire:model="slot_interval_minutes"
-                            class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500">
+                            class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600">
                         <option value="15">15 minutes (e.g. 10:00, 10:15, 10:30)</option>
                         <option value="30">30 minutes (e.g. 10:00, 10:30, 11:00)</option>
                         <option value="45">45 minutes</option>
                         <option value="60">60 minutes (Hourly)</option>
                     </select>
-                    <p class="text-[11px] text-slate-500 mt-1">Controls the gap between selectable start times on the public portal.</p>
+                    <p class="text-[11px] text-gray-500 mt-1">Controls the gap between selectable start times on the public portal.</p>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Timezone
                     </label>
                     <input type="text"
                            wire:model="timezone"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    <p class="text-[11px] text-slate-500 mt-1">Default: Europe/London. Keeps reminders on time during daylight savings.</p>
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
+                    <p class="text-[11px] text-gray-500 mt-1">Default: Europe/London. Keeps reminders on time during daylight savings.</p>
                 </div>
             </div>
         </div>
 
         <!-- SECTION 3: MESSAGING & AUTOMATED REMINDERS -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
-            <div class="flex items-center gap-3 pb-4 border-b border-slate-100 mb-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <div class="flex items-center gap-3 pb-4 border-b border-gray-100 mb-6">
                 <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                 </div>
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Messaging & Quiet Hours</h2>
-                    <p class="text-xs text-slate-500">Manage 24h reminder rules and safeguard clients from late-night notifications.</p>
+                    <h2 class="text-base font-bold text-gray-900">Messaging & Quiet Hours</h2>
+                    <p class="text-xs text-gray-500">Manage 24h reminder rules and safeguard clients from late-night notifications.</p>
                 </div>
             </div>
 
@@ -501,11 +502,11 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Default Preferred Channel for New Customers
                     </label>
                     <select wire:model="default_channel"
-                            class="w-full sm:w-1/2 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500">
+                            class="w-full sm:w-1/2 rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600">
                         <option value="telegram">Telegram (Automated 24h Bot Reminders)</option>
                         <option value="whatsapp">WhatsApp (1-Tap Direct & Cloud)</option>
                         <option value="sms">SMS</option>
@@ -514,29 +515,29 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Quiet Hours Start (Evening)
                     </label>
                     <input type="time"
                            wire:model="quiet_hours_from"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    <p class="text-[11px] text-slate-500 mt-1">Default 21:00 (9:00 PM). Automated messages stop sending.</p>
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
+                    <p class="text-[11px] text-gray-500 mt-1">Default 21:00 (9:00 PM). Automated messages stop sending.</p>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                         Quiet Hours End (Morning)
                     </label>
                     <input type="time"
                            wire:model="quiet_hours_to"
-                           class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
-                    <p class="text-[11px] text-slate-500 mt-1">Default 08:00 (8:00 AM). Dispatching resumes safely in the morning.</p>
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
+                    <p class="text-[11px] text-gray-500 mt-1">Default 08:00 (8:00 AM). Dispatching resumes safely in the morning.</p>
                 </div>
             </div>
         </div>
 
         <!-- Section 4: Payments & Deposit Policy -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-7">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-7">
             <div class="flex items-center justify-between gap-4 mb-6">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
@@ -545,15 +546,15 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-base font-bold text-slate-900">Payments & Deposit Policy</h2>
-                        <p class="text-xs text-slate-500">Require an upfront card deposit during online booking to eliminate no-shows.</p>
+                        <h2 class="text-base font-bold text-gray-900">Payments & Deposit Policy</h2>
+                        <p class="text-xs text-gray-500">Require an upfront card deposit during online booking to eliminate no-shows.</p>
                     </div>
                 </div>
 
                 <!-- Enable Toggle -->
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" wire:model.live="deposit_enabled" class="sr-only peer">
-                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                 </label>
             </div>
 
@@ -572,11 +573,11 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                             Deposit Calculation Type
                         </label>
                         <select wire:model.live="deposit_type"
-                                class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500">
+                                class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600">
                             <option value="percentage">Percentage of Service Price (%)</option>
                             <option value="fixed">Fixed Monetary Amount (&pound;)</option>
                             <option value="full">Full Upfront Payment (100%)</option>
@@ -585,26 +586,26 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
 
                     @if($deposit_type !== 'full')
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                                 {{ $deposit_type === 'percentage' ? 'Deposit Percentage (%)' : 'Deposit Amount (£)' }}
                             </label>
                             <div class="relative rounded-xl shadow-sm">
                                 @if($deposit_type === 'fixed')
                                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <span class="text-slate-500 sm:text-sm font-bold">&pound;</span>
+                                        <span class="text-gray-500 sm:text-sm font-bold">&pound;</span>
                                     </div>
                                 @endif
                                 <input type="number"
                                        step="0.01"
                                        wire:model="deposit_value"
-                                       class="w-full rounded-xl border border-slate-300 {{ $deposit_type === 'fixed' ? 'pl-8' : 'px-3.5' }} py-2.5 text-sm focus:border-rose-500 focus:ring-rose-500" />
+                                       class="w-full rounded-xl border border-gray-300 {{ $deposit_type === 'fixed' ? 'pl-8' : 'px-3.5' }} py-2.5 text-sm focus:border-mulberry-600 focus:ring-mulberry-600" />
                                 @if($deposit_type === 'percentage')
                                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                        <span class="text-slate-500 sm:text-sm font-bold">%</span>
+                                        <span class="text-gray-500 sm:text-sm font-bold">%</span>
                                     </div>
                                 @endif
                             </div>
-                            <p class="text-[11px] text-slate-500 mt-1">
+                            <p class="text-[11px] text-gray-500 mt-1">
                                 {{ $deposit_type === 'percentage' ? 'e.g. 20% deposit on a £50 service is £10.00' : 'e.g. £15 flat deposit for all services' }}
                             </p>
                         </div>
@@ -612,53 +613,72 @@ new #[Layout('layouts.app')] #[Title('Business Settings')] class extends Compone
                 </div>
 
                 <!-- Stripe Gateway Credentials -->
-                <div class="pt-5 border-t border-slate-100">
+                <div class="pt-5 border-t border-gray-100">
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Stripe Gateway Connection
                         </h4>
-                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
-                            <input type="checkbox" wire:model="stripe_test_mode" class="rounded text-rose-600 focus:ring-rose-500">
+                        <label class="flex items-center gap-2 text-xs font-semibold text-gray-600 cursor-pointer">
+                            <input type="checkbox" wire:model="stripe_test_mode" class="rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
                             <span>Sandbox / Test Mode</span>
                         </label>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                            <label class="block text-[11px] font-semibold text-gray-600 mb-1">
                                 Stripe Publishable Key (pk_...)
                             </label>
                             <input type="text"
                                    wire:model="stripe_publishable_key"
                                    placeholder="pk_test_..."
-                                   class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono focus:border-rose-500 focus:ring-rose-500" />
+                                   class="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-mono focus:border-mulberry-600 focus:ring-mulberry-600" />
                         </div>
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                            <label class="block text-[11px] font-semibold text-gray-600 mb-1">
                                 Stripe Secret Key (sk_...)
                             </label>
                             <input type="password"
-                                   wire:model="stripe_secret_key"
-                                   placeholder="sk_test_..."
-                                   class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-mono focus:border-rose-500 focus:ring-rose-500" />
+                               wire:model="stripe_secret_key"
+                               autocomplete="new-password"
+                               @if ($stripe_secret_key_set) placeholder="Saved - leave blank to keep" @else placeholder="sk_test_..." @endif
+                               class="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-mono focus:border-mulberry-600 focus:ring-mulberry-600" />
                         </div>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-2">
-                        Leave blank to run in simulated test mode for local demonstration without real card charges.
+
+                    <div class="mt-4">
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Stripe Webhook Signing Secret (whsec_...)
+                        </label>
+                        <input type="password"
+                           wire:model="stripe_webhook_secret"
+                           autocomplete="new-password"
+                           @if ($stripe_webhook_secret_set) placeholder="Saved - leave blank to keep" @else placeholder="whsec_..." @endif
+                           class="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-mono focus:border-mulberry-600 focus:ring-mulberry-600" />
+                        <p class="text-[11px] text-gray-400 mt-1">
+                            Stripe shows this once when you create the webhook endpoint. Without it,
+                            paid deposits cannot be confirmed.
+                        </p>
+                    </div>
+
+                    <p class="text-[11px] text-gray-400 mt-3">
+                        Saved keys are stored encrypted and are never shown again. Leave a field
+                        blank to keep the key already saved. Leave all of them blank to run in
+                        simulated test mode without real card charges.
                     </p>
                 </div>
             @else
-                <div class="text-xs text-slate-500 bg-slate-50 p-3.5 rounded-xl border border-dashed border-slate-200">
+                <div class="text-xs text-gray-500 bg-gray-50 p-3.5 rounded-xl border border-dashed border-gray-200">
                     Deposit requirement is currently <strong>disabled</strong>. Customers can self-book appointments online without paying an upfront fee.
                 </div>
             @endif
         </div>
 
         <!-- Sticky Submit Bar -->
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
             <button type="submit"
                     wire:loading.attr="disabled"
-                    class="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-lg shadow-rose-600/25 transition-all flex items-center gap-2">
+                    class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-mulberry-700 hover:bg-mulberry-800 text-white font-semibold text-sm shadow-sm transition-all">
                 <span wire:loading.remove>Save All Settings</span>
                 <span wire:loading class="flex items-center gap-2">
                     <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">

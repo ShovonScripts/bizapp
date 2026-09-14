@@ -9,11 +9,11 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
 
-    <body class="h-full bg-[#f8f9fc] font-sans antialiased text-gray-900 selection:bg-mulberry-500 selection:text-white">
+    <body class="h-full bg-canvas font-sans antialiased text-gray-900 selection:bg-mulberry-500 selection:text-white">
         <div class="relative min-h-full flex flex-col overflow-hidden">
             {{-- Ambient Liquid Glass Background Glow Orbs --}}
-            <div class="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[450px] w-[750px] rounded-full bg-gradient-to-tr from-mulberry-300/20 via-pink-200/20 to-slate-200/30 blur-[130px]" aria-hidden="true"></div>
-            <div class="pointer-events-none absolute top-[700px] -right-32 h-[400px] w-[400px] rounded-full bg-gradient-to-bl from-rose-200/20 via-mulberry-100/20 to-transparent blur-[120px]" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[450px] w-[750px] rounded-full bg-gradient-to-tr from-mulberry-300/20 via-mulberry-200/20 to-gray-200/30 blur-[130px]" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute top-[700px] -right-32 h-[400px] w-[400px] rounded-full bg-gradient-to-bl from-mulberry-200/20 via-mulberry-100/20 to-transparent blur-[120px]" aria-hidden="true"></div>
 
             {{-- Floating Liquid Glass Navbar --}}
             <header class="sticky top-4 z-40 px-4 sm:px-6">
@@ -116,10 +116,10 @@
 
                     {{-- Stripe Credential & Payment Security Box --}}
                     <div class="mt-12 liquid-glass-border rounded-3xl p-[2px] shadow-lg">
-                        <div class="liquid-glass-content rounded-[22px] p-6 sm:p-8 backdrop-blur-xl">
+                        <div class="liquid-glass-content rounded-glass-inner p-6 sm:p-8 backdrop-blur-xl">
                             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                                 <div class="flex items-start sm:items-center gap-4">
-                                    <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                                    <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gray-900 text-white shadow-sm">
                                         <svg class="h-6 w-6 fill-current" viewBox="0 0 24 24">
                                             <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697.5 12.523.5 7.054.5 3.197 3.398 3.197 7.79c0 4.542 3.864 6.273 6.671 7.378 2.378.934 3.197 1.579 3.197 2.533 0 .991-.89 1.488-2.316 1.488-2.378 0-5.11-1.125-6.84-2.148l-.92 5.513c1.782.99 4.887 1.706 7.76 1.706 5.867 0 9.778-2.834 9.778-7.534 0-4.66-3.805-6.398-6.551-7.576z"/>
                                         </svg>

@@ -11,13 +11,13 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
 
-    <body class="h-full bg-[#f8f9fc] font-sans antialiased text-gray-900 selection:bg-mulberry-500 selection:text-white">
+    <body class="h-full bg-canvas font-sans antialiased text-gray-900 selection:bg-mulberry-500 selection:text-white">
 
         <div class="relative min-h-full flex flex-col overflow-hidden">
             {{-- Ambient Liquid Glass Background Glow Orbs --}}
-            <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-tr from-mulberry-300/25 via-pink-200/20 to-slate-200/40 blur-[130px]" aria-hidden="true"></div>
-            <div class="pointer-events-none absolute top-[600px] -right-40 h-[450px] w-[450px] rounded-full bg-gradient-to-bl from-rose-200/20 via-mulberry-100/30 to-transparent blur-[120px]" aria-hidden="true"></div>
-            <div class="pointer-events-none absolute top-[1400px] -left-40 h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-indigo-100/25 via-mulberry-100/20 to-transparent blur-[130px]" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-tr from-mulberry-300/25 via-mulberry-200/20 to-gray-200/40 blur-[130px]" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute top-[600px] -right-40 h-[450px] w-[450px] rounded-full bg-gradient-to-bl from-mulberry-200/20 via-mulberry-100/30 to-transparent blur-[120px]" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute top-[1400px] -left-40 h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-mulberry-100/25 via-mulberry-100/20 to-transparent blur-[130px]" aria-hidden="true"></div>
 
             {{-- ---------------------------------------------------------------
                  Floating Liquid Glass Header Navbar
@@ -77,7 +77,7 @@
 
                         {{-- Main Headline --}}
                         <h1 class="mt-6 text-4xl font-extrabold leading-[1.12] tracking-tight text-gray-900 sm:text-6xl animate-fade-in-up">
-                            Bookings that <span class="bg-gradient-to-r from-mulberry-800 via-mulberry-600 to-rose-500 bg-clip-text text-transparent">run themselves</span>.
+                            Bookings that <span class="bg-gradient-to-r from-mulberry-800 via-mulberry-600 to-mulberry-500 bg-clip-text text-transparent">run themselves</span>.
                         </h1>
 
                         {{-- Subtitle --}}
@@ -117,8 +117,8 @@
                          Liquid Glass Live UI Preview Showcase Card
                     ---------------------------------------------------------- --}}
                     <div class="mt-14 sm:mt-18">
-                        <div class="liquid-glass-border rounded-[28px] sm:rounded-[36px] p-[2.5px] shadow-2xl transition-transform duration-500 hover:scale-[1.01]">
-                            <div class="liquid-glass-content rounded-[25px] sm:rounded-[33px] p-5 sm:p-8 backdrop-blur-2xl">
+                        <div class="liquid-glass-border rounded-glass sm:rounded-3xl p-[2.5px] shadow-2xl transition-transform duration-500 hover:scale-[1.01]">
+                            <div class="liquid-glass-content rounded-glass-inner p-5 sm:p-8 backdrop-blur-2xl">
                                 
                                 {{-- Preview Top Bar --}}
                                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-black/10 pb-5">
@@ -427,10 +427,10 @@
 
                         {{-- Stripe Credential & Trust Box --}}
                         <div class="mt-10 liquid-glass-border rounded-3xl p-[2px] shadow-lg">
-                            <div class="liquid-glass-content rounded-[22px] p-6 sm:p-8 backdrop-blur-xl">
+                            <div class="liquid-glass-content rounded-glass-inner p-6 sm:p-8 backdrop-blur-xl">
                                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                                     <div class="flex items-start sm:items-center gap-4">
-                                        <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                                        <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gray-900 text-white shadow-sm">
                                             <svg class="h-6 w-6 fill-current" viewBox="0 0 24 24">
                                                 <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697.5 12.523.5 7.054.5 3.197 3.398 3.197 7.79c0 4.542 3.864 6.273 6.671 7.378 2.378.934 3.197 1.579 3.197 2.533 0 .991-.89 1.488-2.316 1.488-2.378 0-5.11-1.125-6.84-2.148l-.92 5.513c1.782.99 4.887 1.706 7.76 1.706 5.867 0 9.778-2.834 9.778-7.534 0-4.66-3.805-6.398-6.551-7.576z"/>
                                             </svg>

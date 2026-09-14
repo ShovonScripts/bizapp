@@ -159,38 +159,26 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
 <div x-data="{ toast: null }"
      x-on:toast.window="toast = $event.detail.message; setTimeout(() => toast = null, 2500)">
 
-    <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
-
-        <div class="flex items-center justify-between px-4 sm:px-0">
-            <div>
-                <h1 class="text-xl font-semibold text-gray-900">Services</h1>
-                <p class="text-sm text-gray-500">What you offer, how long it takes, what it costs</p>
-            </div>
-
-            <x-primary-button type="button" wire:click="create">
+    <x-page title="Services" subtitle="What you offer, how long it takes, what it costs">
+        <x-slot:actions>
+            <x-button wire:click="create">
                 <svg class="h-4 w-4 -ml-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
                 Add service
-            </x-primary-button>
-        </div>
+            </x-button>
+        </x-slot:actions>
 
-        <x-toast />
+        <x-toast class="!px-0" />
 
-        <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 overflow-hidden">
+        <x-card>
 
             @if ($inactiveCount > 0)
                 <div class="border-b border-gray-100 px-4">
                     <label class="inline-flex min-h-touch items-center gap-2 py-2 text-sm text-gray-600">
-                        <input type="checkbox" wire:model.live="showInactive"
-                               class="h-5 w-5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
+                        <x-checkbox wire:model.live="showInactive" />
                         Show hidden ({{ $inactiveCount }})
                     </label>
                 </div>
             @endif
-
-            @php
-                $act = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600';
-                $actDanger = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600';
-            @endphp
 
             @if ($services->isEmpty())
                 <div class="px-4 py-16 text-center">
@@ -200,7 +188,7 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                         <p class="text-gray-500">Everything is hidden right now.</p>
                         <p class="mt-1 text-sm text-gray-400">Tick "Show hidden ({{ $inactiveCount }})" above to see them.</p>
                     @else
-                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 mb-3 shadow-xs ring-1 ring-rose-100 transition-transform duration-300 hover:scale-105">
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-mulberry-50 text-mulberry-700 mb-3 ring-1 ring-mulberry-100 transition-transform duration-300 hover:scale-105">
                             <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                             </svg>
@@ -240,16 +228,14 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                         </div>
 
                         <div class="mt-3 flex flex-wrap gap-2">
-                            <button type="button" wire:click="edit({{ $service->id }})" class="{{ $act }}">Edit</button>
+                            <x-button variant="secondary" size="sm" type="button" wire:click="edit({{ $service->id }})">Edit</x-button>
 
-                            <button type="button" wire:click="toggleActive({{ $service->id }})" class="{{ $act }}">
+                            <x-button variant="secondary" size="sm" type="button" wire:click="toggleActive({{ $service->id }})">
                                 {{ $service->active ? 'Hide' : 'Show' }}
-                            </button>
+                            </x-button>
 
                             @if ((int) $service->appointments_count === 0)
-                                <button type="button" wire:click="delete({{ $service->id }})"
-                                        wire:confirm="Delete {{ $service->name }}?"
-                                        class="{{ $actDanger }}">Delete</button>
+                                <x-button variant="outline-danger" size="sm" type="button" wire:click="delete({{ $service->id }})" wire:confirm="Delete {{ $service->name }}?">Delete</x-button>
                             @endif
                         </div>
                     </li>
@@ -303,21 +289,18 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                                 </td>
 
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                                    <button type="button" wire:click="edit({{ $service->id }})"
-                                            class="rounded font-medium text-mulberry-700 hover:text-mulberry-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">Edit</button>
+                                    <x-button variant="link" size="bare" wire:click="edit({{ $service->id }})">Edit</x-button>
 
-                                    <button type="button" wire:click="toggleActive({{ $service->id }})"
-                                            class="ms-3 rounded text-gray-600 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                    <x-button variant="underline" size="bare" class="ms-3" wire:click="toggleActive({{ $service->id }})">
                                         {{ $service->active ? 'Hide' : 'Show' }}
-                                    </button>
+                                    </x-button>
 
                                     {{-- Only offered when there is no history to lose. Cast because an
                                          aggregate column can arrive as a string depending on the driver,
                                          and a strict comparison would silently hide the button. --}}
                                     @if ((int) $service->appointments_count === 0)
-                                        <button type="button" wire:click="delete({{ $service->id }})"
-                                                wire:confirm="Delete {{ $service->name }}?"
-                                                class="ms-3 rounded text-gray-500 hover:text-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600">Delete</button>
+                                        <x-button variant="underline-danger" size="bare" class="ms-3" wire:click="delete({{ $service->id }})"
+                                                wire:confirm="Delete {{ $service->name }}?">Delete</x-button>
                                     @endif
                                 </td>
                             </tr>
@@ -326,8 +309,8 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
                 </table>
             </div>
             @endif
-        </div>
-    </div>
+        </x-card>
+    </x-page>
 
     @if ($showForm)
         <x-form-modal :title="$editingId ? 'Edit service' : 'Add service'"
@@ -375,8 +358,7 @@ new #[Layout('layouts.app')] #[Title('Services')] class extends Component
             </div>
 
             <label class="flex min-h-touch items-start gap-3 rounded-lg bg-gray-50 p-3">
-                <input type="checkbox" wire:model="active"
-                       class="mt-0.5 h-5 w-5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
+                <x-checkbox wire:model="active" class="mt-0.5" />
                 <span class="text-sm text-gray-700">
                     Available to book
                     <span class="block text-xs text-gray-500">

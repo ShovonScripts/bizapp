@@ -9,10 +9,10 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
 
-    <body class="h-full bg-[#f8f9fc] font-sans antialiased text-gray-900 selection:bg-mulberry-500 selection:text-white">
+    <body class="h-full bg-canvas font-sans antialiased text-gray-900 selection:bg-mulberry-500 selection:text-white">
         <div class="relative min-h-full flex flex-col overflow-hidden">
             {{-- Ambient Glow Orbs --}}
-            <div class="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[400px] w-[700px] rounded-full bg-gradient-to-tr from-mulberry-300/20 via-pink-200/20 to-slate-200/30 blur-[130px]" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[400px] w-[700px] rounded-full bg-gradient-to-tr from-mulberry-300/20 via-mulberry-200/20 to-gray-200/30 blur-[130px]" aria-hidden="true"></div>
 
             {{-- Floating Liquid Glass Navbar --}}
             <header class="sticky top-4 z-40 px-4 sm:px-6">

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-50">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-gray-50">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
@@ -14,10 +14,10 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-full font-sans text-slate-900 antialiased bg-slate-50 selection:bg-rose-500 selection:text-white">
+    <body class="min-h-full font-sans text-gray-900 antialiased bg-gray-50 selection:bg-mulberry-500 selection:text-white">
         <!-- Global Loading Bar -->
-        <div wire:loading.delay class="fixed inset-x-0 top-0 z-[100] h-1 overflow-hidden bg-rose-100">
-            <div class="h-full w-1/3 bg-gradient-to-r from-rose-500 to-indigo-600 loading-bar"></div>
+        <div wire:loading.delay class="fixed inset-x-0 top-0 z-[100] h-1 overflow-hidden bg-mulberry-100">
+            <div class="h-full w-1/3 bg-mulberry-600 loading-bar"></div>
         </div>
 
         <main id="content" class="min-h-screen py-6 sm:py-12 px-4 sm:px-6">

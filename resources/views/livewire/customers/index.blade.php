@@ -450,22 +450,14 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 <div x-data="{ toast: null }"
      x-on:toast.window="toast = $event.detail.message; setTimeout(() => toast = null, 2500)">
 
-    <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-4">
+    <x-page title="Customers" :subtitle="$totalCount.' on your books'">
+        <x-slot:actions>
+            <x-button wire:click="create">Add customer</x-button>
+        </x-slot:actions>
 
-        {{-- Rendered here rather than in the layout's $header slot, which does not
-             work reliably from a full-page Livewire component. --}}
-        <div class="flex items-center justify-between px-4 sm:px-0">
-            <div>
-                <h1 class="text-xl font-semibold text-gray-900">Customers</h1>
-                <p class="text-sm text-gray-500">{{ $totalCount }} on your books</p>
-            </div>
+        <x-toast class="!px-0" />
 
-            <x-primary-button type="button" wire:click="create">Add customer</x-primary-button>
-        </div>
-
-        <x-toast />
-
-        <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 overflow-hidden">
+        <x-card>
 
             <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
                 <div class="flex-1 relative">
@@ -494,25 +486,18 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                 </x-select-input>
             </div>
 
-            @php
-                // Same button vocabulary as the diary's row actions, so the owner
-                // learns one interaction and it works everywhere.
-                $act = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600';
-                $actDanger = 'inline-flex items-center justify-center min-h-touch rounded-lg border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600';
-            @endphp
-
             @if ($customers->isEmpty())
                 <div class="px-4 py-16 text-center">
                     @if ($search !== '' || $filter !== 'all')
-                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 mb-3 shadow-xs ring-1 ring-slate-200/80 transition-transform duration-300 hover:scale-105">
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gray-100 text-gray-500 mb-3 shadow-xs ring-1 ring-gray-200/80 transition-transform duration-300 hover:scale-105">
                             <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
                         </div>
                         <p class="text-gray-500 font-medium">No customers match that.</p>
-                        <button type="button" wire:click="clearFilters" class="mt-3 inline-flex items-center justify-center min-h-touch rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                        <x-button variant="secondary" class="mt-3" wire:click="clearFilters">
                             Clear filters
-                        </button>
+                        </x-button>
                     @else
                         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-mulberry-50 text-mulberry-700 mb-3 shadow-xs ring-1 ring-mulberry-100 transition-transform duration-300 hover:scale-105">
                             <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
@@ -566,14 +551,13 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                 </div>
                             </div>
 
-                            <button type="button" @click="actions = ! actions"
-                                    :aria-expanded="actions ? 'true' : 'false'"
-                                    aria-label="More actions for {{ $customer->name }}"
-                                    class="-me-1 inline-flex min-h-touch min-w-touch shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                            <x-icon-button label="More actions for {{ $customer->name }}"
+                                           x-bind:aria-expanded="actions ? 'true' : 'false'"
+                                           x-on:click="actions = ! actions" class="-me-1">
                                 <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                     <path d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 11.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM10 17a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
                                 </svg>
-                            </button>
+                            </x-icon-button>
                         </div>
 
                         <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
@@ -614,16 +598,14 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                         <div x-show="actions" x-collapse style="display: none"
                              class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
-                            <button type="button" wire:click="viewProfile({{ $customer->id }})" class="{{ $act }}">View Profile</button>
-                            <button type="button" wire:click="edit({{ $customer->id }})" class="{{ $act }}">Edit</button>
+                            <x-button variant="secondary" size="sm" type="button" wire:click="viewProfile({{ $customer->id }})">View Profile</x-button>
+                            <x-button variant="secondary" size="sm" type="button" wire:click="edit({{ $customer->id }})">Edit</x-button>
 
                             @if (! $customer->telegramLinked() && $customer->preferred_channel !== 'none')
-                                <button type="button" wire:click="telegramLink({{ $customer->id }})" class="{{ $act }}">Invite to Telegram</button>
+                                <x-button variant="secondary" size="sm" type="button" wire:click="telegramLink({{ $customer->id }})">Invite to Telegram</x-button>
                             @endif
 
-                            <button type="button" wire:click="delete({{ $customer->id }})"
-                                    wire:confirm="Remove {{ $customer->name }}? Their appointment history is kept."
-                                    class="{{ $actDanger }}">Remove</button>
+                            <x-button variant="outline-danger" size="sm" type="button" wire:click="delete({{ $customer->id }})" wire:confirm="Remove {{ $customer->name }}? Their appointment history is kept.">Remove</x-button>
                         </div>
                     </li>
                 @endforeach
@@ -696,28 +678,28 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                                 </td>
 
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                                    <button type="button" wire:click="viewProfile({{ $customer->id }})"
-                                            class="me-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                    <x-button variant="ghost" size="sm" class="me-2" wire:click="viewProfile({{ $customer->id }})">
                                         Profile
-                                    </button>
+                                    </x-button>
 
                                     @if (! $customer->telegramLinked() && $customer->preferred_channel !== 'none')
+                                        {{-- design-allow:start — Telegram actions keep channel-sky
+                                             so the row's channel stays readable at a glance. --}}
                                         <button type="button" wire:click="telegramLink({{ $customer->id }})"
                                                 class="me-3 rounded-md px-2.5 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">
                                             Invite
                                         </button>
+                                        {{-- design-allow:end --}}
                                     @endif
 
-                                    <button type="button" wire:click="edit({{ $customer->id }})"
-                                            class="me-3 rounded-md px-2.5 py-1.5 text-sm font-medium text-mulberry-700 hover:bg-mulberry-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-mulberry-600">
+                                    <x-button variant="link" size="sm" class="me-3" wire:click="edit({{ $customer->id }})">
                                         Edit
-                                    </button>
+                                    </x-button>
 
-                                    <button type="button" wire:click="delete({{ $customer->id }})"
-                                            wire:confirm="Remove {{ $customer->name }}? Their appointment history is kept."
-                                            class="rounded-md px-2.5 py-1.5 text-sm font-medium text-gray-500 hover:text-red-700 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600">
+                                    <x-button variant="underline-danger" size="sm" wire:click="delete({{ $customer->id }})"
+                                               wire:confirm="Remove {{ $customer->name }}? Their appointment history is kept.">
                                         Remove
-                                    </button>
+                                    </x-button>
                                 </td>
                             </tr>
                         @endforeach
@@ -729,8 +711,8 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
             @if ($customers->hasPages())
                 <div class="p-4 border-t border-gray-100">{{ $customers->links() }}</div>
             @endif
-        </div>
-    </div>
+        </x-card>
+    </x-page>
 
     @if ($showForm)
         <x-form-modal :title="$editingId ? 'Edit customer' : 'Add customer'"
@@ -781,15 +763,13 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                 <div>
                     <x-input-label for="notes" value="Notes" />
-                    <textarea wire:model="notes" id="notes" rows="2"
-                              class="mt-1 block w-full rounded-lg border-gray-300 text-base shadow-sm focus:border-mulberry-600 focus:ring-mulberry-600 sm:text-sm"></textarea>
+                    <x-textarea wire:model="notes" id="notes" rows="2" class="mt-1 block w-full"></x-textarea>
                     <p class="mt-1 text-xs text-gray-500">Private staff notes — not sent to the customer.</p>
                     <x-input-error :messages="$errors->get('notes')" class="mt-2" />
                 </div>
 
                 <label class="flex items-start gap-2 rounded-md bg-gray-50 p-3">
-                    <input type="checkbox" wire:model="marketing_consent"
-                           class="mt-0.5 rounded border-gray-300 text-mulberry-700 focus:ring-mulberry-600">
+                    <x-checkbox wire:model="marketing_consent" class="mt-0.5" />
                     <span class="text-sm text-gray-700">
                         Happy to receive offers and news
                         <span class="block text-xs text-gray-500">
@@ -844,6 +824,9 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                         </p>
                     </div>
 
+                    {{-- design-allow:start — the invite panel is a clipboard, not a form.
+                         Read-only gray fields + x-ref copy wiring are the point of it;
+                         x-text-input's focus affordance would invite typing here. --}}
                     <div>
                         <x-input-label value="Ready-made message" />
                         <textarea readonly rows="3" x-ref="message"
@@ -874,6 +857,7 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                             Nothing is sent from here — paste it into WhatsApp or a text message.
                         </p>
                     </div>
+                    {{-- design-allow:end --}}
                 </div>
 
                 <div class="flex shrink-0 justify-end gap-3 border-t border-gray-200 bg-gray-50 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -919,13 +903,12 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                             </div>
                         </div>
 
-                        <button type="button" wire:click="closeProfile"
-                                class="rounded-lg p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                                aria-label="Close profile">
+                        <x-icon-button label="Close profile" wire:click="closeProfile"
+                                       class="text-gray-400 hover:text-gray-600">
                             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
-                        </button>
+                        </x-icon-button>
                     </div>
 
                     {{-- 1-Tap Direct Outreach Actions --}}
@@ -954,13 +937,14 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                         @if ($cust->email)
                             <a href="mailto:{{ $cust->email }}"
-                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200 text-xs font-semibold hover:bg-purple-100 transition-colors">
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-800 border border-gray-200 text-xs font-semibold hover:bg-gray-100 transition-colors">
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 Email
                             </a>
                         @endif
 
                         @if (! $cust->telegramLinked() && $cust->preferred_channel !== 'none')
+                            {{-- design-allow: same channel-sky invite chip as the table row. --}}
                             <button type="button" wire:click="telegramLink({{ $cust->id }})"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold hover:bg-sky-100 transition-colors">
                                 Invite to Telegram
@@ -1022,14 +1006,16 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
                         <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-2xs space-y-2">
                             <div class="flex items-center justify-between">
                                 <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Notes & Preferences</h3>
-                                <button type="button" wire:click="saveProfileNotes"
-                                        class="text-xs font-semibold text-mulberry-700 hover:text-mulberry-900">
+                                <x-button variant="link" size="bare" wire:click="saveProfileNotes">
                                     Save notes
-                                </button>
+                                </x-button>
                             </div>
+                            {{-- design-allow:start — the drawer's quick-note box is styled as a
+                                 flat gray pad distinct from form fields; it sits in a read panel. --}}
                             <textarea wire:model="profileNotes" rows="2"
                                       placeholder="Color formula, preferred tea, allergies, family notes..."
                                       class="block w-full rounded-lg border-gray-200 bg-gray-50 text-sm focus:border-mulberry-600 focus:ring-mulberry-600"></textarea>
+                            {{-- design-allow:end --}}
                         </div>
 
                         {{-- Booking History Timeline --}}
@@ -1080,10 +1066,9 @@ new #[Layout('layouts.app')] #[Title('Customers')] class extends Component
 
                     {{-- Drawer Footer --}}
                     <div class="p-4 border-t border-gray-100 bg-gray-50/70 flex items-center justify-between gap-3">
-                        <button type="button" wire:click="edit({{ $cust->id }})"
-                                class="text-xs font-semibold text-gray-700 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        <x-button variant="ghost" size="sm" wire:click="edit({{ $cust->id }})">
                             Edit Full Details
-                        </button>
+                        </x-button>
                         <x-secondary-button wire:click="closeProfile">
                             Close
                         </x-secondary-button>

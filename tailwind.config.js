@@ -35,10 +35,23 @@ export default {
                     900: '#5a253c',
                     950: '#330f20',
                 },
+
+                /*
+                 * The marketing/guest page ground. It was a literal bg-[#f8f9fc]
+                 * in five files (an arbitrary hex Tailwind can't reason about and
+                 * nothing could change in one place). As a token, "the app's off-
+                 * white" has a name.
+                 */
+                canvas: '#f8f9fc',
             },
 
             fontFamily: {
                 sans: ['Instrument Sans', ...defaultTheme.fontFamily.sans],
+                /* Several screens name a `font-display` heading font, but a second
+                   family was never loaded. Mapped to the app face so the intent is
+                   explicit and the class stops doing nothing; swap the stack here if
+                   a display face is added later. */
+                display: ['Instrument Sans', ...defaultTheme.fontFamily.sans],
             },
 
             minHeight: {
@@ -52,6 +65,39 @@ export default {
             },
             minWidth: {
                 touch: '2.75rem',
+            },
+
+            /*
+             * Shape tokens — so a card is one radius and a control is another,
+             * everywhere. Pages used to mix rounded-lg/xl/2xl/3xl at random; the
+             * components (x-card, x-button, x-text-input) are the only things
+             * allowed to name a radius now.
+             */
+            borderRadius: {
+                card: '0.875rem', // 14px — the outer face of every card/panel
+                /*
+                 * The liquid-glass panels pair an outer shell with an inner face
+                 * inset by the shell's 2px border. Those two radii were written as
+                 * rounded-[32px]/rounded-[22px]/rounded-[30px] in three different
+                 * files; as tokens they are named, counted, and reusable.
+                 */
+                glass: '1.5rem',        // outer shell (was rounded-3xl / rounded-[32px])
+                'glass-inner': '1.375rem', // inner face (was rounded-[30px] / rounded-[22px])
+            },
+            boxShadow: {
+                card: '0 1px 2px 0 rgba(16, 24, 40, 0.05)',
+                pop: '0 8px 24px -8px rgba(16, 24, 40, 0.14)',
+                /*
+                 * Pages were written against Tailwind v4's scale (shadow-xs) but
+                 * this project builds on v3, where the class does not exist —
+                 * 48 uses rendered nothing at all. Defined here so the intent
+                 * (a whisper of a shadow, below sm) actually paints.
+                 */
+                xs: '0 1px 2px 0 rgba(16, 24, 40, 0.04)',
+            },
+            fontSize: {
+                /* Same story as shadow-xs: v4-only name used across the diary. */
+                '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
             },
         },
     },

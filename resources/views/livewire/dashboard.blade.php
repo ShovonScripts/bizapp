@@ -343,8 +343,8 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-2xl font-bold tracking-tight text-gray-900 font-display">Platform</h1>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200 shadow-xs">
-                            <svg class="h-3.5 w-3.5 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-mulberry-100 text-mulberry-800 border border-mulberry-200 shadow-xs">
+                            <svg class="h-3.5 w-3.5 text-mulberry-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0112 2.25c5.385 0 9.75 4.365 9.75 9.75s-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12 6.865 2.25 12 2.25z"/>
                             </svg>
                             Superadmin Control
@@ -356,7 +356,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 </div>
 
                 {{-- Tab Selection Navigation --}}
-                <div class="flex items-center gap-1.5 bg-slate-200/80 p-1 rounded-2xl">
+                <div class="flex items-center gap-1.5 bg-gray-200/80 p-1 rounded-2xl">
                     <button type="button" wire:click="$set('platformTab', 'tenants')"
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $platformTab === 'tenants' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900' }}">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -398,7 +398,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 {{-- Platform KPI Stat Cards --}}
                 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                     @foreach ($totals as $label => $count)
-                        <div wire:key="total-{{ $label }}" class="stat-card stat-card--mulberry bg-white p-5 shadow-sm sm:rounded-2xl border border-slate-100 animate-fade-in-up delay-{{ $loop->iteration }}">
+                        <div wire:key="total-{{ $label }}" class="stat-card stat-card--mulberry bg-white p-5 shadow-sm sm:rounded-2xl border border-gray-100 animate-fade-in-up delay-{{ $loop->iteration }}">
                             <div class="flex items-center justify-between">
                                 <div class="text-xs uppercase tracking-wider font-semibold text-gray-500">{{ $label }}</div>
                                 <span class="h-2 w-2 rounded-full bg-mulberry-500"></span>
@@ -411,7 +411,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 {{-- Create Business Modal / Collapsible Form --}}
                 @if ($showCreateModal)
                     <div class="liquid-glass-border rounded-3xl p-[2px] shadow-xl animate-fade-in-up">
-                        <div class="liquid-glass-content rounded-[22px] p-6 sm:p-8 backdrop-blur-xl">
+                        <div class="liquid-glass-content rounded-glass-inner p-6 sm:p-8 backdrop-blur-xl">
                             <div class="flex items-center justify-between border-b border-black/10 pb-4 mb-6">
                                 <div>
                                     <h3 class="text-lg font-bold text-gray-900">Provision New Business Tenant</h3>
@@ -480,7 +480,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 @endif
 
                 {{-- Businesses Management Panel --}}
-                <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-100 animate-fade-in-up delay-5 overflow-hidden">
+                <div class="bg-white shadow-sm sm:rounded-2xl border border-gray-100 animate-fade-in-up delay-5 overflow-hidden">
                     <div class="border-b border-gray-100 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div class="flex items-center gap-3">
                             <h2 class="text-base font-bold text-gray-900">Registered Businesses</h2>
@@ -508,7 +508,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
 
                     <ul class="divide-y divide-gray-100">
                         @forelse ($businesses as $client)
-                            <li wire:key="business-{{ $client->id }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 transition-colors hover:bg-slate-50/80">
+                            <li wire:key="business-{{ $client->id }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 transition-colors hover:bg-gray-50/80">
                                 <div class="flex items-start gap-3.5">
                                     <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-mulberry-50 to-mulberry-100 text-mulberry-800 font-bold text-sm shadow-xs border border-mulberry-200/60">
                                         {{ substr($client->name, 0, 1) }}
@@ -517,7 +517,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                         <div class="flex items-center gap-2">
                                             <div class="font-bold text-gray-900 text-sm sm:text-base">{{ $client->name }}</div>
                                             @if ($client->niche)
-                                                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                                <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
                                                     {{ $client->niche }}
                                                 </span>
                                             @endif
@@ -728,13 +728,13 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/10 pb-6 mb-6">
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <span class="grid h-8 w-8 place-items-center rounded-xl bg-slate-900 text-white font-bold text-xs shadow-xs">
+                                        <span class="grid h-8 w-8 place-items-center rounded-xl bg-gray-900 text-white font-bold text-xs shadow-xs">
                                             <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24">
                                                 <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697.5 12.523.5 7.054.5 3.197 3.398 3.197 7.79c0 4.542 3.864 6.273 6.671 7.378 2.378.934 3.197 1.579 3.197 2.533 0 .991-.89 1.488-2.316 1.488-2.378 0-5.11-1.125-6.84-2.148l-.92 5.513c1.782.99 4.887 1.706 7.76 1.706 5.867 0 9.778-2.834 9.778-7.534 0-4.66-3.805-6.398-6.551-7.576z"/>
                                             </svg>
                                         </span>
                                         <h3 class="text-base font-bold text-gray-900">Stripe Gateway Credentials Box</h3>
-                                        <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5 text-[11px] font-semibold border border-slate-200">
+                                        <span class="rounded-full bg-gray-100 text-gray-700 px-2.5 py-0.5 text-[11px] font-semibold border border-gray-200">
                                             PCI-DSS Level 1
                                         </span>
                                     </div>
@@ -744,11 +744,11 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                 </div>
 
                                 {{-- Test Mode vs Live Mode Toggle --}}
-                                <div class="flex items-center gap-3 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200 shrink-0">
+                                <div class="flex items-center gap-3 bg-gray-100/90 p-1.5 rounded-2xl border border-gray-200 shrink-0">
                                     <span class="text-xs font-bold text-gray-700 ps-2">Environment:</span>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" wire:model.live="stripeTestMode" class="sr-only peer">
-                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
                                         <span class="ms-2 text-xs font-bold {{ $stripeTestMode ? 'text-amber-700' : 'text-emerald-700' }}">
                                             {{ $stripeTestMode ? 'Test Mode (Sandbox)' : 'Live Production' }}
                                         </span>
@@ -795,9 +795,9 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <input type="text" readonly value="{{ url('/stripe/webhook') }}" id="stripe-webhook-input"
-                                               class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-gray-800 font-mono w-64 sm:w-80 shadow-xs" />
+                                               class="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-800 font-mono w-64 sm:w-80 shadow-xs" />
                                         <button type="button" onclick="navigator.clipboard.writeText('{{ url('/stripe/webhook') }}'); this.innerText = 'Copied!';"
-                                                class="liquid-glass-btn rounded-xl px-3 py-1.5 text-xs font-bold text-gray-800 border border-slate-300 hover:bg-white transition-all shadow-xs">
+                                                class="liquid-glass-btn rounded-xl px-3 py-1.5 text-xs font-bold text-gray-800 border border-gray-300 hover:bg-white transition-all shadow-xs">
                                             Copy
                                         </button>
                                     </div>
@@ -823,10 +823,10 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
 
                             <div class="grid gap-6 sm:grid-cols-3">
                                 {{-- Starter Plan --}}
-                                <div class="rounded-2xl border border-slate-200 bg-white/70 p-5 shadow-xs">
+                                <div class="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-xs">
                                     <div class="flex items-center justify-between mb-3">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Starter Plan</span>
-                                        <span class="rounded bg-slate-100 text-slate-700 text-[10px] font-semibold px-2 py-0.5">Solo</span>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-gray-700">Starter Plan</span>
+                                        <span class="rounded bg-gray-100 text-gray-700 text-[10px] font-semibold px-2 py-0.5">Solo</span>
                                     </div>
                                     <label class="block text-xs font-semibold text-gray-600 mb-1">Monthly Rate ({{ $currencySymbol }})</label>
                                     <div class="relative">
@@ -858,10 +858,10 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                 </div>
 
                                 {{-- Business Plan --}}
-                                <div class="rounded-2xl border border-slate-200 bg-white/70 p-5 shadow-xs">
+                                <div class="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-xs">
                                     <div class="flex items-center justify-between mb-3">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Business Plan</span>
-                                        <span class="rounded bg-slate-100 text-slate-700 text-[10px] font-semibold px-2 py-0.5">Enterprise</span>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-gray-700">Business Plan</span>
+                                        <span class="rounded bg-gray-100 text-gray-700 text-[10px] font-semibold px-2 py-0.5">Enterprise</span>
                                     </div>
                                     <label class="block text-xs font-semibold text-gray-600 mb-1">Monthly Rate ({{ $currencySymbol }})</label>
                                     <div class="relative">
@@ -927,22 +927,22 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                         <span class="text-xs font-semibold text-gray-500 me-2">Select Page:</span>
                         @foreach (['home' => 'Homepage (/)', 'pricing' => 'Pricing (/pricing)', 'privacy' => 'Privacy (/privacy)', 'terms' => 'Terms (/terms)'] as $key => $label)
                             <button type="button" wire:click="selectSeoPage('{{ $key }}')"
-                                    class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all {{ $seoPage === $key ? 'bg-mulberry-700 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
+                                    class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all {{ $seoPage === $key ? 'bg-mulberry-700 text-white shadow-xs' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                                 {{ $label }}
                             </button>
                         @endforeach
                     </div>
 
                     {{-- Live Google Search SERP Snippet Preview --}}
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-                        <div class="flex items-center gap-2 text-xs text-slate-500 mb-3">
-                            <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Google Search Result Preview</span>
+                    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs">
+                        <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                            <span class="font-bold text-gray-700 uppercase tracking-wider text-[11px]">Google Search Result Preview</span>
                             <span>&bull;</span>
                             <span class="text-emerald-600 font-medium">Simulated snippet</span>
                         </div>
                         <div class="max-w-2xl font-sans">
                             <div class="flex items-center gap-2 text-xs text-[#202124]">
-                                <div class="grid h-4 w-4 place-items-center rounded-full bg-slate-100 text-[10px] font-bold text-mulberry-700">
+                                <div class="grid h-4 w-4 place-items-center rounded-full bg-gray-100 text-[10px] font-bold text-mulberry-700">
                                     {{ substr($siteName ?: config('app.name'), 0, 1) }}
                                 </div>
                                 <span class="text-xs text-[#202124]">{{ $seoCanonicalBase ?: 'http://127.0.0.1:8000' }}/{{ $seoPage === 'home' ? '' : $seoPage }}</span>
@@ -1036,7 +1036,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                  ------------------------------------------------------------------ --}}
             @if (auth()->user()->isSuperAdmin() && \App\Support\Tenant::isOperating())
                 <div class="liquid-glass-border rounded-2xl p-[2px] mb-4 shadow-lg animate-fade-in-up">
-                    <div class="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 backdrop-blur-xl rounded-[14px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
+                    <div class="bg-gradient-to-r from-amber-100 to-amber-50 backdrop-blur-xl rounded-card p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
                         <div class="flex items-center gap-3">
                             <span class="grid h-8 w-8 place-items-center rounded-xl bg-amber-500 text-white font-bold text-xs shadow-sm">
                                 <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24">
@@ -1070,19 +1070,19 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 $at = fn ($utc) => $business->toLocal($utc)->format('H:i');
             @endphp
 
-            <div class="bg-white/80 backdrop-blur-md rounded-2xl p-5 sm:p-7 border border-slate-200/80 shadow-xs relative overflow-hidden animate-fade-in-up">
-                <div class="absolute -top-16 -right-16 w-48 h-48 bg-gradient-to-br from-rose-100 to-indigo-100 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+            <div class="bg-white/80 backdrop-blur-md rounded-2xl p-5 sm:p-7 border border-gray-200/80 shadow-xs relative overflow-hidden animate-fade-in-up">
+                <div class="absolute -top-16 -right-16 w-48 h-48 bg-gradient-to-br from-mulberry-100 to-mulberry-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                     <div>
                         <div class="flex items-center gap-2">
-                            <h1 class="text-2xl font-bold tracking-tight text-slate-900 font-display">{{ $greeting }}</h1>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/60">
+                            <h1 class="text-2xl font-bold tracking-tight text-gray-900 font-display">{{ $greeting }}</h1>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                                 Live
                             </span>
                         </div>
-                        <p class="text-sm text-slate-500 mt-1 flex items-center gap-2">
-                            <span class="font-semibold text-slate-700">{{ $business->name }}</span>
-                            <span class="text-slate-300">&bull;</span>
+                        <p class="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                            <span class="font-semibold text-gray-700">{{ $business->name }}</span>
+                            <span class="text-gray-300">&bull;</span>
                             <span>{{ $today['date']->format('l, j F Y') }}</span>
                         </p>
                     </div>
@@ -1090,8 +1090,8 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                     <div class="flex flex-wrap items-center gap-2.5">
                         @if ($business->slug)
                             <a href="{{ route('booking.public', $business->slug) }}" target="_blank"
-                               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all">
-                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all">
+                                <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                 </svg>
                                 <span>Public Page</span>
@@ -1107,15 +1107,15 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 </div>
 
                 <!-- Dashboard View Switcher: Today's Diary vs Revenue Analytics -->
-                <div class="flex items-center gap-2 pt-6 border-t border-slate-100 mt-5">
+                <div class="flex items-center gap-2 pt-6 border-t border-gray-100 mt-5">
                     <button type="button"
                             wire:click="$set('tab', 'overview')"
-                            class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $tab === 'overview' ? 'bg-mulberry-700 text-white shadow-sm shadow-mulberry-900/20' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                            class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $tab === 'overview' ? 'bg-mulberry-700 text-white shadow-sm shadow-mulberry-900/20' : 'bg-gray-50 text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
                         Today's Schedule &amp; Actions
                     </button>
                     <button type="button"
                             wire:click="$set('tab', 'analytics')"
-                            class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 {{ $tab === 'analytics' ? 'bg-mulberry-700 text-white shadow-sm shadow-mulberry-900/20' : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+                            class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 {{ $tab === 'analytics' ? 'bg-mulberry-700 text-white shadow-sm shadow-mulberry-900/20' : 'bg-gray-50 text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
@@ -1191,34 +1191,34 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-                    <div class="stat-card stat-card--mulberry bg-white shadow-xs hover:shadow-md sm:rounded-2xl p-5 border border-slate-100 transition-all animate-fade-in-up delay-1">
-                        <div class="text-xs uppercase tracking-wider text-slate-500 font-bold">Today's Diary</div>
-                        <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-slate-900">
+                    <div class="stat-card stat-card--mulberry bg-white shadow-xs hover:shadow-md sm:rounded-2xl p-5 border border-gray-100 transition-all animate-fade-in-up delay-1">
+                        <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">Today's Diary</div>
+                        <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-gray-900">
                             {{ $today['live']->count() }}
                         </div>
-                        <div class="text-xs text-slate-500 mt-1 font-medium">
+                        <div class="text-xs text-gray-500 mt-1 font-medium">
                             {{ $today['live']->count() === 1 ? 'booking' : 'bookings' }},
                             {{ $money($today['expected']) }} expected
                         </div>
                         @if ($today['done']->isNotEmpty())
                             <div class="mt-3 flex items-center gap-1.5">
-                                <div class="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                                <div class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden">
                                     <div class="h-full rounded-full bg-mulberry-500 transition-all duration-500" style="width: {{ $today['live']->count() > 0 ? round($today['done']->count() / ($today['live']->count() + $today['done']->count()) * 100) : 100 }}%"></div>
                                 </div>
-                                <span class="text-xs font-semibold tabular-nums text-slate-600">{{ $today['done']->count() }} done</span>
+                                <span class="text-xs font-semibold tabular-nums text-gray-600">{{ $today['done']->count() }} done</span>
                             </div>
-                            <div class="mt-1 text-xs text-slate-500">
+                            <div class="mt-1 text-xs text-gray-500">
                                 {{ $money($today['takenSoFar']) }} taken
                             </div>
                         @endif
                     </div>
 
-                    <div class="stat-card stat-card--sky bg-white shadow-xs hover:shadow-md sm:rounded-2xl p-5 border border-slate-100 transition-all animate-fade-in-up delay-2">
-                        <div class="text-xs uppercase tracking-wider text-slate-500 font-bold">Tomorrow's Queue</div>
-                        <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-slate-900">
+                    <div class="stat-card stat-card--sky bg-white shadow-xs hover:shadow-md sm:rounded-2xl p-5 border border-gray-100 transition-all animate-fade-in-up delay-2">
+                        <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">Tomorrow's Queue</div>
+                        <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-gray-900">
                             {{ $tomorrow['all']->count() }}
                         </div>
-                        <div class="text-xs text-slate-500 mt-1 font-medium">
+                        <div class="text-xs text-gray-500 mt-1 font-medium">
                             {{ $tomorrow['all']->count() === 1 ? 'booking' : 'bookings' }} to remind
                         </div>
                         @if ($tomorrow['unreachable']->isNotEmpty())
@@ -1229,31 +1229,31 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                         @endif
                     </div>
 
-                    <div class="stat-card stat-card--emerald bg-white shadow-xs hover:shadow-md sm:rounded-2xl p-5 border border-slate-100 transition-all animate-fade-in-up delay-3">
-                        <div class="text-xs uppercase tracking-wider text-slate-500 font-bold">{{ $month['label'] }} Revenue</div>
+                    <div class="stat-card stat-card--emerald bg-white shadow-xs hover:shadow-md sm:rounded-2xl p-5 border border-gray-100 transition-all animate-fade-in-up delay-3">
+                        <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">{{ $month['label'] }} Revenue</div>
                         <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-emerald-700">
                             {{ $money($month['earned']) }}
                         </div>
-                        <div class="text-xs text-slate-500 mt-1 font-medium">
+                        <div class="text-xs text-gray-500 mt-1 font-medium">
                             from {{ $month['completed'] }} completed
                         </div>
                         @if ($month['booked'] > 0)
-                            <div class="mt-1 text-xs text-slate-500">
+                            <div class="mt-1 text-xs text-gray-500">
                                 {{ $money($month['booked']) }} still in the diary
                             </div>
                         @endif
                     </div>
 
-                    <div class="stat-card stat-card--amber bg-white shadow-xs hover:shadow-md sm:rounded-2xl p-5 border border-slate-100 transition-all animate-fade-in-up delay-4">
-                        <div class="text-xs uppercase tracking-wider text-slate-500 font-bold">No-shows this month</div>
-                        <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums {{ $month['noShows'] > 0 ? 'text-amber-700' : 'text-slate-900' }}">
+                    <div class="stat-card stat-card--amber bg-white shadow-xs hover:shadow-md sm:rounded-2xl p-5 border border-gray-100 transition-all animate-fade-in-up delay-4">
+                        <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">No-shows this month</div>
+                        <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums {{ $month['noShows'] > 0 ? 'text-amber-700' : 'text-gray-900' }}">
                             {{ $month['noShows'] }}
                         </div>
-                        <div class="text-xs text-slate-500 mt-1 font-medium">
+                        <div class="text-xs text-gray-500 mt-1 font-medium">
                             {{ $money($month['noShowValue']) }} of empty chair
                         </div>
                         @if ($month['cancelled'] > 0)
-                            <div class="mt-1 text-xs text-slate-500">
+                            <div class="mt-1 text-xs text-gray-500">
                                 {{ $month['cancelled'] }} cancelled in advance
                             </div>
                         @endif
@@ -1291,11 +1291,11 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
 
                 <div class="grid gap-4 lg:grid-cols-3">
 
-                    <div class="bg-white shadow-xs sm:rounded-2xl border border-slate-100 lg:col-span-2 overflow-hidden animate-fade-in-up delay-3">
-                        <div class="flex items-center justify-between border-b border-slate-100 p-5">
+                    <div class="bg-white shadow-xs sm:rounded-2xl border border-gray-100 lg:col-span-2 overflow-hidden animate-fade-in-up delay-3">
+                        <div class="flex items-center justify-between border-b border-gray-100 p-5">
                             <div>
-                                <h2 class="font-bold text-slate-900 text-base">Today's Appointments</h2>
-                                <p class="text-xs text-slate-500">Live order of visits for today</p>
+                                <h2 class="font-bold text-gray-900 text-base">Today's Appointments</h2>
+                                <p class="text-xs text-gray-500">Live order of visits for today</p>
                             </div>
                             <a href="{{ route('appointments.index', ['day' => $today['date']->toDateString()]) }}"
                                wire:navigate class="text-xs font-bold text-mulberry-700 hover:text-mulberry-900 transition-colors inline-flex items-center gap-1">
@@ -1304,44 +1304,44 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                         </div>
 
                         @if ($today['next'])
-                            <div class="border-b border-slate-100 p-4 bg-gradient-to-r from-mulberry-50/70 via-rose-50/30 to-white">
+                            <div class="border-b border-gray-100 p-4 bg-gradient-to-r from-mulberry-50/70 via-mulberry-100/50 to-white">
                                 <div class="flex items-center gap-2">
                                     <span class="inline-block h-2 w-2 rounded-full bg-mulberry-600 animate-pulse"></span>
                                     <span class="text-xs uppercase tracking-wider font-bold text-mulberry-800">Next Up Today</span>
                                 </div>
-                                <div class="mt-1.5 font-bold text-slate-900 text-base">
+                                <div class="mt-1.5 font-bold text-gray-900 text-base">
                                     {{ $at($today['next']->starts_at) }}
                                     &middot; {{ $today['next']->customer?->name ?? 'Customer removed' }}
                                 </div>
-                                <div class="text-xs text-slate-600 mt-0.5">
+                                <div class="text-xs text-gray-600 mt-0.5">
                                     {{ $today['next']->service?->name ?? 'No service set' }}
                                     @if ($today['next']->staffMember)
-                                        with <span class="font-semibold text-slate-700">{{ $today['next']->staffMember->name }}</span>
+                                        with <span class="font-semibold text-gray-700">{{ $today['next']->staffMember->name }}</span>
                                     @endif
                                     &middot; {{ $today['next']->starts_at->diffForHumans() }}
                                 </div>
                             </div>
                         @endif
 
-                        <ul class="divide-y divide-slate-100 text-sm">
+                        <ul class="divide-y divide-gray-100 text-sm">
                             @forelse ($today['all'] as $appointment)
                                 <li wire:key="today-{{ $appointment->id }}"
-                                    class="appointment-card flex items-center justify-between gap-3 p-4 hover:bg-slate-50/60 transition-colors {{ $appointment->isCancelled() ? 'opacity-60' : '' }}"
+                                    class="appointment-card flex items-center justify-between gap-3 p-4 hover:bg-gray-50/60 transition-colors {{ $appointment->isCancelled() ? 'opacity-60' : '' }}"
                                     style="--staff-color: {{ $appointment->staffMember?->color ?? 'transparent' }}">
                                     <style>
                                         [wire\:key="today-{{ $appointment->id }}"]::before { background: var(--staff-color); }
                                     </style>
 
                                     <div class="flex min-w-0 items-baseline gap-3 pl-2">
-                                        <span class="w-12 shrink-0 font-bold tabular-nums text-slate-900">
+                                        <span class="w-12 shrink-0 font-bold tabular-nums text-gray-900">
                                             {{ $at($appointment->starts_at) }}
                                         </span>
 
                                         <span class="min-w-0">
-                                            <span class="font-bold text-slate-900">
+                                            <span class="font-bold text-gray-900">
                                                 {{ $appointment->customer?->name ?? 'Customer removed' }}
                                             </span>
-                                            <span class="text-slate-500 text-xs sm:text-sm">
+                                            <span class="text-gray-500 text-xs sm:text-sm">
                                                 &middot; {{ $appointment->service?->name ?? 'No service set' }}
                                             </span>
                                         </span>
@@ -1351,19 +1351,19 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                         <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold {{ $appointment->isCancelled() ? 'bg-gray-100 text-gray-600' : ($appointment->status === 'completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700') }}">
                                             {{ $appointment->statusLabel() }}
                                         </span>
-                                        <span class="tabular-nums font-extrabold text-slate-900 text-sm">
+                                        <span class="tabular-nums font-extrabold text-gray-900 text-sm">
                                             {{ $money($appointment->price) }}
                                         </span>
                                     </div>
                                 </li>
                             @empty
                                 <li class="px-4 py-12 text-center">
-                                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 mb-3 shadow-xs ring-1 ring-rose-100 transition-transform duration-300 hover:scale-105">
+                                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-mulberry-50 text-mulberry-700 mb-3 shadow-xs ring-1 ring-mulberry-100 transition-transform duration-300 hover:scale-105">
                                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                                         </svg>
                                     </div>
-                                    <p class="text-slate-500 font-medium">
+                                    <p class="text-gray-500 font-medium">
                                         Nothing booked today.
                                     </p>
                                     <a href="{{ route('appointments.index') }}" wire:navigate
@@ -1378,21 +1378,21 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                         {{-- Named for what it can prove today: who is contactable. It becomes
                              "reminders sent" once messages:dispatch exists — until then this
                              page must not claim a message went out. --}}
-                        <div class="bg-white shadow-xs sm:rounded-2xl border border-slate-100 overflow-hidden animate-fade-in-up delay-4">
-                            <div class="border-b border-slate-100 p-5">
-                                <h2 class="font-bold text-slate-900 text-base">Tomorrow's Reminders</h2>
-                                <p class="text-xs text-slate-500">{{ $tomorrow['date']->format('l, j F') }}</p>
+                        <div class="bg-white shadow-xs sm:rounded-2xl border border-gray-100 overflow-hidden animate-fade-in-up delay-4">
+                            <div class="border-b border-gray-100 p-5">
+                                <h2 class="font-bold text-gray-900 text-base">Tomorrow's Reminders</h2>
+                                <p class="text-xs text-gray-500">{{ $tomorrow['date']->format('l, j F') }}</p>
                             </div>
 
                             <div class="space-y-3 p-5 text-sm">
                                 @if ($tomorrow['all']->isEmpty())
                                     <div class="text-center py-6">
-                                        <div class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 mb-2 shadow-xs ring-1 ring-indigo-100 transition-transform duration-300 hover:scale-105">
+                                        <div class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 mb-2 shadow-xs ring-1 ring-sky-100 transition-transform duration-300 hover:scale-105">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                                             </svg>
                                         </div>
-                                        <p class="text-slate-500 text-xs font-medium">Nothing booked for tomorrow yet.</p>
+                                        <p class="text-gray-500 text-xs font-medium">Nothing booked for tomorrow yet.</p>
                                     </div>
                                 @else
                                     <p class="text-gray-700">
@@ -1430,7 +1430,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                         {{-- Win-back. Two numbers, because they lead somewhere different:
                              one is a campaign you can run today, the other is a reason to
                              start asking for consent at the till. --}}
-                        <div class="bg-white shadow-xs sm:rounded-2xl border border-slate-100 animate-fade-in-up delay-5 overflow-hidden">
+                        <div class="bg-white shadow-xs sm:rounded-2xl border border-gray-100 animate-fade-in-up delay-5 overflow-hidden">
                             <div class="border-b border-gray-100 p-4 bg-gradient-to-r from-white to-mulberry-50/30">
                                 <h2 class="font-semibold text-gray-900">Not seen in 90 days</h2>
                             </div>
@@ -1487,57 +1487,57 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                 <div class="space-y-6 animate-fade-in-up">
                     <!-- 4 Executive KPI Cards -->
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div class="stat-card stat-card--emerald bg-white shadow-sm sm:rounded-2xl p-5 border border-slate-100">
-                            <div class="text-xs uppercase tracking-wider text-slate-500 font-bold">Realized Revenue</div>
+                        <div class="stat-card stat-card--emerald bg-white shadow-sm sm:rounded-2xl p-5 border border-gray-100">
+                            <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">Realized Revenue</div>
                             <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-emerald-700">
                                 {{ $money($analytics['kpis']['totalRevenue']) }}
                             </div>
-                            <div class="text-xs text-slate-500 mt-1 font-medium">
+                            <div class="text-xs text-gray-500 mt-1 font-medium">
                                 Across {{ $analytics['kpis']['totalCompleted'] }} completed {{ $analytics['kpis']['totalCompleted'] === 1 ? 'visit' : 'visits' }}
                             </div>
                         </div>
 
-                        <div class="stat-card stat-card--mulberry bg-white shadow-sm sm:rounded-2xl p-5 border border-slate-100">
-                            <div class="text-xs uppercase tracking-wider text-slate-500 font-bold">Avg. Ticket Size (AOV)</div>
-                            <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-slate-900">
+                        <div class="stat-card stat-card--mulberry bg-white shadow-sm sm:rounded-2xl p-5 border border-gray-100">
+                            <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">Avg. Ticket Size (AOV)</div>
+                            <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-gray-900">
                                 {{ $money($analytics['kpis']['aov']) }}
                             </div>
-                            <div class="text-xs text-slate-500 mt-1 font-medium">
+                            <div class="text-xs text-gray-500 mt-1 font-medium">
                                 Average spend per completed client
                             </div>
                         </div>
 
-                        <div class="stat-card stat-card--sky bg-white shadow-sm sm:rounded-2xl p-5 border border-slate-100">
-                            <div class="text-xs uppercase tracking-wider text-slate-500 font-bold">Client Retention Rate</div>
+                        <div class="stat-card stat-card--sky bg-white shadow-sm sm:rounded-2xl p-5 border border-gray-100">
+                            <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">Client Retention Rate</div>
                             <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-sky-700">
                                 {{ $analytics['kpis']['retentionRate'] }}%
                             </div>
-                            <div class="text-xs text-slate-500 mt-1 font-medium">
+                            <div class="text-xs text-gray-500 mt-1 font-medium">
                                 {{ $analytics['kpis']['repeatCustomers'] }} clients with 2+ bookings
                             </div>
                         </div>
 
-                        <div class="stat-card stat-card--amber bg-white shadow-sm sm:rounded-2xl p-5 border border-slate-100">
-                            <div class="text-xs uppercase tracking-wider text-slate-500 font-bold">Online Self-Booking Share</div>
+                        <div class="stat-card stat-card--amber bg-white shadow-sm sm:rounded-2xl p-5 border border-gray-100">
+                            <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">Online Self-Booking Share</div>
                             <div class="mt-1.5 text-2xl sm:text-3xl font-extrabold tabular-nums text-amber-700">
                                 {{ $analytics['kpis']['onlineShare'] }}%
                             </div>
-                            <div class="text-xs text-slate-500 mt-1 font-medium">
+                            <div class="text-xs text-gray-500 mt-1 font-medium">
                                 {{ $analytics['kpis']['onlineBookings'] }} booked via client portal
                             </div>
                         </div>
                     </div>
 
                     <!-- Weekly Revenue Bar Chart Card -->
-                    <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 p-6 sm:p-7">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 border-b border-slate-100">
+                    <div class="rounded-card border border-gray-200 bg-white p-5 sm:p-7 shadow-card">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 border-b border-gray-100">
                             <div>
-                                <h3 class="text-base sm:text-lg font-bold text-slate-900">Weekly Revenue Velocity</h3>
-                                <p class="text-xs text-slate-500">Daily earnings and appointment volume over the last 7 days.</p>
+                                <h3 class="text-base sm:text-lg font-bold text-gray-900">Weekly Revenue Velocity</h3>
+                                <p class="text-xs text-gray-500">Daily earnings and appointment volume over the last 7 days.</p>
                             </div>
                             <div class="text-left sm:text-right">
-                                <div class="text-xs text-slate-400 font-medium">7-Day Total Takings</div>
-                                <div class="text-xl sm:text-2xl font-black text-rose-600">
+                                <div class="text-xs text-gray-400 font-medium">7-Day Total Takings</div>
+                                <div class="text-xl sm:text-2xl font-black text-mulberry-700">
                                     {{ $money($analytics['weekly']['totalRevenue']) }}
                                 </div>
                             </div>
@@ -1549,21 +1549,21 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                 @foreach ($analytics['weekly']['days'] as $day)
                                     <div class="flex flex-col items-center justify-end h-full gap-2 group">
                                         <!-- Price Tag on top of bar -->
-                                        <div class="text-[11px] sm:text-xs font-bold tabular-nums {{ $day['revenue'] > 0 ? 'text-slate-900' : 'text-slate-400' }} transition-transform group-hover:scale-110">
+                                        <div class="text-[11px] sm:text-xs font-bold tabular-nums {{ $day['revenue'] > 0 ? 'text-gray-900' : 'text-gray-400' }} transition-transform group-hover:scale-110">
                                             {{ $day['revenue'] > 0 ? '£'.number_format($day['revenue'], 0) : '£0' }}
                                         </div>
 
                                         <!-- Bar with dynamic height -->
-                                        <div class="w-full max-w-[48px] rounded-t-xl transition-all duration-500 {{ $day['isToday'] ? 'bg-gradient-to-t from-rose-600 to-rose-400 ring-2 ring-rose-400 shadow-lg shadow-rose-600/20' : ($day['revenue'] > 0 ? 'bg-gradient-to-t from-mulberry-700 to-mulberry-500 hover:from-mulberry-800 hover:to-mulberry-600' : 'bg-slate-100 hover:bg-slate-200') }}"
+                                        <div class="w-full max-w-[48px] rounded-t-xl transition-all duration-500 {{ $day['isToday'] ? 'bg-gradient-to-t from-mulberry-900 to-mulberry-700 ring-2 ring-mulberry-400 shadow-lg shadow-mulberry-600/20' : ($day['revenue'] > 0 ? 'bg-gradient-to-t from-mulberry-700 to-mulberry-500 hover:from-mulberry-800 hover:to-mulberry-600' : 'bg-gray-100 hover:bg-gray-200') }}"
                                              style="height: {{ $day['heightPct'] }}%;">
                                         </div>
 
                                         <!-- Day Label -->
                                         <div class="text-center pt-1">
-                                            <div class="text-xs font-bold {{ $day['isToday'] ? 'text-rose-600' : 'text-slate-700' }}">
+                                            <div class="text-xs font-bold {{ $day['isToday'] ? 'text-mulberry-700' : 'text-gray-700' }}">
                                                 {{ $day['day'] }}
                                             </div>
-                                            <div class="text-[10px] text-slate-400">
+                                            <div class="text-[10px] text-gray-400">
                                                 {{ $day['date'] }}
                                             </div>
                                         </div>
@@ -1576,10 +1576,10 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                     <!-- Bottom Two Columns: Top Services & Staff Leaderboard -->
                     <div class="grid gap-6 lg:grid-cols-2">
                         <!-- Top Services Leaderboard -->
-                        <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 p-6">
-                            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-                                <h3 class="font-bold text-slate-900 text-base">Top Performing Services</h3>
-                                <a href="{{ route('services.index') }}" wire:navigate class="text-xs font-semibold text-rose-600 hover:underline">
+                        <div class="rounded-card border border-gray-200 bg-white p-5">
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+                                <h3 class="font-bold text-gray-900 text-base">Top Performing Services</h3>
+                                <a href="{{ route('services.index') }}" wire:navigate class="text-xs font-semibold text-mulberry-700 hover:underline">
                                     Manage &rarr;
                                 </a>
                             </div>
@@ -1588,24 +1588,24 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                                 @forelse ($analytics['topServices'] as $svc)
                                     <div class="space-y-1.5">
                                         <div class="flex items-center justify-between text-xs sm:text-sm">
-                                            <span class="font-bold text-slate-900 flex items-center gap-2">
-                                                <span class="w-5 h-5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-extrabold flex items-center justify-center">
+                                            <span class="font-bold text-gray-900 flex items-center gap-2">
+                                                <span class="w-5 h-5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-extrabold flex items-center justify-center">
                                                     {{ $loop->iteration }}
                                                 </span>
                                                 {{ $svc['name'] }}
                                             </span>
                                             <div class="text-right tabular-nums">
-                                                <span class="font-extrabold text-slate-900">{{ $money($svc['revenue']) }}</span>
-                                                <span class="text-slate-400 text-xs font-normal">({{ $svc['count'] }} {{ $svc['count'] === 1 ? 'sale' : 'sales' }})</span>
+                                                <span class="font-extrabold text-gray-900">{{ $money($svc['revenue']) }}</span>
+                                                <span class="text-gray-400 text-xs font-normal">({{ $svc['count'] }} {{ $svc['count'] === 1 ? 'sale' : 'sales' }})</span>
                                             </div>
                                         </div>
-                                        <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                            <div class="h-full bg-gradient-to-r from-mulberry-600 to-rose-500 rounded-full transition-all duration-500"
+                                        <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                            <div class="h-full bg-gradient-to-r from-mulberry-600 to-mulberry-400 rounded-full transition-all duration-500"
                                                  style="width: {{ $svc['share'] }}%;"></div>
                                         </div>
                                     </div>
                                 @empty
-                                    <div class="py-10 text-center text-slate-400 text-sm">
+                                    <div class="py-10 text-center text-gray-400 text-sm">
                                         No completed bookings yet to calculate top services.
                                     </div>
                                 @endforelse
@@ -1613,36 +1613,36 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] class extends Component
                         </div>
 
                         <!-- Staff Specialist Leaderboard -->
-                        <div class="bg-white shadow-sm sm:rounded-2xl border border-slate-200/80 p-6">
-                            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-                                <h3 class="font-bold text-slate-900 text-base">Staff Earnings & Productivity</h3>
-                                <a href="{{ route('staff.index') }}" wire:navigate class="text-xs font-semibold text-rose-600 hover:underline">
+                        <div class="rounded-card border border-gray-200 bg-white p-5">
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+                                <h3 class="font-bold text-gray-900 text-base">Staff Earnings & Productivity</h3>
+                                <a href="{{ route('staff.index') }}" wire:navigate class="text-xs font-semibold text-mulberry-700 hover:underline">
                                     View Staff &rarr;
                                 </a>
                             </div>
 
                             <div class="space-y-3">
                                 @forelse ($analytics['staffLeaderboard'] as $staff)
-                                    <div class="p-3.5 rounded-xl border border-slate-100 hover:bg-slate-50/60 transition-colors flex items-center justify-between gap-3">
+                                    <div class="p-3.5 rounded-xl border border-gray-100 hover:bg-gray-50/60 transition-colors flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-full text-white font-bold flex items-center justify-center text-sm shadow-sm"
                                                  style="background-color: {{ $staff['color'] }};">
                                                 {{ substr($staff['name'], 0, 1) }}
                                             </div>
                                             <div>
-                                                <h4 class="font-bold text-slate-900 text-sm">{{ $staff['name'] }}</h4>
-                                                <p class="text-xs text-slate-500">{{ $staff['count'] }} completed {{ $staff['count'] === 1 ? 'booking' : 'bookings' }}</p>
+                                                <h4 class="font-bold text-gray-900 text-sm">{{ $staff['name'] }}</h4>
+                                                <p class="text-xs text-gray-500">{{ $staff['count'] }} completed {{ $staff['count'] === 1 ? 'booking' : 'bookings' }}</p>
                                             </div>
                                         </div>
                                         <div class="text-right">
-                                            <div class="font-extrabold text-slate-900 text-sm tabular-nums">
+                                            <div class="font-extrabold text-gray-900 text-sm tabular-nums">
                                                 {{ $money($staff['revenue']) }}
                                             </div>
-                                            <div class="text-[10px] text-slate-400 font-medium">Earned</div>
+                                            <div class="text-[10px] text-gray-400 font-medium">Earned</div>
                                         </div>
                                     </div>
                                 @empty
-                                    <div class="py-10 text-center text-slate-400 text-sm">
+                                    <div class="py-10 text-center text-gray-400 text-sm">
                                         No staff members active or assigned.
                                     </div>
                                 @endforelse

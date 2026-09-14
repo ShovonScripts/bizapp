@@ -14,11 +14,11 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="h-full font-sans text-gray-900 antialiased bg-[#f8f9fc] selection:bg-mulberry-500 selection:text-white">
+    <body class="h-full font-sans text-gray-900 antialiased bg-canvas selection:bg-mulberry-500 selection:text-white">
         <div class="relative min-h-screen flex flex-col justify-center items-center px-4 py-12 overflow-hidden">
             {{-- Ambient Liquid Glass Glow Orbs --}}
-            <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[450px] w-[750px] rounded-full bg-gradient-to-tr from-mulberry-300/25 via-pink-200/20 to-slate-200/30 blur-[130px]" aria-hidden="true"></div>
-            <div class="pointer-events-none absolute -bottom-40 right-1/4 h-[400px] w-[400px] rounded-full bg-gradient-to-bl from-rose-200/20 via-mulberry-100/25 to-transparent blur-[120px]" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[450px] w-[750px] rounded-full bg-gradient-to-tr from-mulberry-300/25 via-mulberry-200/20 to-gray-200/30 blur-[130px]" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -bottom-40 right-1/4 h-[400px] w-[400px] rounded-full bg-gradient-to-bl from-mulberry-200/20 via-mulberry-100/25 to-transparent blur-[120px]" aria-hidden="true"></div>
 
             {{-- Logo --}}
             <div class="relative z-10 mb-8 text-center">
@@ -34,8 +34,8 @@
 
             {{-- Liquid Glass Form Container --}}
             <div class="relative z-10 w-full sm:max-w-md">
-                <div class="liquid-glass-border rounded-[32px] p-[2px] shadow-2xl">
-                    <div class="liquid-glass-content rounded-[30px] p-6 sm:p-9 backdrop-blur-2xl">
+                <div class="liquid-glass-border rounded-glass p-[2px] shadow-2xl">
+                    <div class="liquid-glass-content rounded-glass-inner p-6 sm:p-9 backdrop-blur-2xl">
                         {{ $slot }}
                     </div>
                 </div>

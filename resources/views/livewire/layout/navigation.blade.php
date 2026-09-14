@@ -41,7 +41,7 @@ new class extends Component
     $allBusinesses = $isSuperAdmin ? \App\Models\Business::orderBy('name')->get() : collect();
 @endphp
 
-<nav x-data="{ open: false }" class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-xs transition-all">
+<nav x-data="{ open: false }" class="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40 shadow-xs transition-all">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
@@ -96,8 +96,8 @@ new class extends Component
                             </button>
                         </div>
                     @else
-                        <div class="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1 text-xs text-purple-900 font-semibold">
-                            <svg class="h-3.5 w-3.5 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <div class="inline-flex items-center gap-1.5 bg-mulberry-50 border border-mulberry-200 rounded-full px-3 py-1 text-xs text-mulberry-800 font-semibold">
+                            <svg class="h-3.5 w-3.5 text-mulberry-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0112 2.25c5.385 0 9.75 4.365 9.75 9.75s-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12 6.865 2.25 12 2.25z"/>
                             </svg>
                             <span>Platform Mode</span>
@@ -110,8 +110,8 @@ new class extends Component
                         <button type="button"
                                 @click="navigator.clipboard.writeText('{{ route('booking.public', $activeSlug) }}'); copied = true; setTimeout(() => copied = false, 2500)"
                                 title="Copy public booking link to share with clients"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/80 transition-all shadow-sm">
-                            <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-mulberry-50 text-mulberry-800 hover:bg-mulberry-100 border border-mulberry-200 transition-all shadow-sm">
+                            <svg class="w-3.5 h-3.5 text-mulberry-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                             </svg>
                             <span x-show="!copied">Booking Link</span>
@@ -213,8 +213,8 @@ new class extends Component
             <div x-data="{ copied: false }" class="px-4 py-2 border-t border-gray-100">
                 <button type="button"
                         @click="navigator.clipboard.writeText('{{ route('booking.public', $activeSlug) }}'); copied = true; setTimeout(() => copied = false, 2500)"
-                        class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 shadow-sm transition-all">
-                    <svg class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold rounded-xl bg-mulberry-50 text-mulberry-800 hover:bg-mulberry-100 border border-mulberry-200 shadow-sm transition-all">
+                    <svg class="w-4 h-4 text-mulberry-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
                     <span x-show="!copied">Copy Online Booking Link</span>
