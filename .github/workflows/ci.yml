@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          # tests run on in-memory SQLite (see phpunit.xml); Crypt needs openssl
+          extensions: sqlite3, mbstring, openssl, intl
+          coverage: none
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        # Blade layouts call @vite(); tests render those views, so the build
+        # manifest must exist or every feature test dies on "manifest not found".
+        run: npm run build
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run test suite
+        run: php artisan test
+
+      - name: Design-system guard
+        # docs/DESIGN-SYSTEM.md — fails on banned colours, raw controls, arbitrary radii.
+        run: bash scripts/check-design.sh
