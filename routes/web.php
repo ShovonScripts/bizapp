@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\StripePaymentController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\WhatsAppWebhookController;
+use App\Models\Appointment;
+use App\Services\Calendar\IcsGenerator;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -89,8 +92,6 @@ Route::match(['get', 'post'], 'whatsapp/webhook', WhatsAppWebhookController::cla
 | Stripe Deposit Payments
 |--------------------------------------------------------------------------
 */
-use App\Http\Controllers\StripePaymentController;
-
 Route::get('booking/{appointment}/payment-success', [StripePaymentController::class, 'success'])
     ->name('stripe.payment.success');
 
@@ -106,11 +107,11 @@ Route::post('stripe/webhook', [StripePaymentController::class, 'webhook'])
 |--------------------------------------------------------------------------
 */
 Route::get('appointments/{cancellation_token}/calendar.ics', function (string $cancellation_token) {
-    $appointment = \App\Models\Appointment::where('cancellation_token', $cancellation_token)
+    $appointment = Appointment::where('cancellation_token', $cancellation_token)
         ->with(['business', 'service', 'staffMember'])
         ->firstOrFail();
 
-    $icsContent = app(\App\Services\Calendar\IcsGenerator::class)->generate($appointment);
+    $icsContent = app(IcsGenerator::class)->generate($appointment);
 
     return response($icsContent, 200, [
         'Content-Type' => 'text/calendar; charset=utf-8',
@@ -142,8 +143,8 @@ Route::get('/heartbeat', function () {
     $lines = array_slice(array_filter(explode("\n", $log)), -30);
 
     return response(
-        "last ".count($lines)." heartbeats (newest last)\n"
-        ."server time now: ".now()->toDateTimeString()." UTC\n"
+        'last '.count($lines)." heartbeats (newest last)\n"
+        .'server time now: '.now()->toDateTimeString()." UTC\n"
         .str_repeat('-', 60)."\n"
         .implode("\n", $lines)."\n",
         200,

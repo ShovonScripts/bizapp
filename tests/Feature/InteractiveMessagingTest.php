@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Messaging\Telegram\UpdateHandler;
 use App\Models\Appointment;
 use App\Models\Business;
+use App\Models\ChannelConnection;
 use App\Models\Customer;
 use App\Models\ScheduledMessage;
 use App\Models\Service;
@@ -39,10 +40,10 @@ class InteractiveMessagingTest extends TestCase
             'timezone' => 'Europe/London',
         ]);
 
-        \App\Models\ChannelConnection::create([
+        ChannelConnection::create([
             'business_id' => $this->salon->id,
             'channel' => 'whatsapp',
-            'status' => \App\Models\ChannelConnection::ACTIVE,
+            'status' => ChannelConnection::ACTIVE,
             'meta' => [
                 'phone_number_id' => '10987654321',
             ],
@@ -222,7 +223,7 @@ class InteractiveMessagingTest extends TestCase
         ];
 
         $payloadJson = json_encode($payload);
-        $signature = 'sha256=' . hash_hmac('sha256', $payloadJson, 'test-app-secret');
+        $signature = 'sha256='.hash_hmac('sha256', $payloadJson, 'test-app-secret');
 
         $response = $this->call('POST', '/whatsapp/webhook', [], [], [], [
             'HTTP_X_Hub_Signature_256' => $signature,
@@ -289,7 +290,7 @@ class InteractiveMessagingTest extends TestCase
         ];
 
         $payloadJson = json_encode($payload);
-        $signature = 'sha256=' . hash_hmac('sha256', $payloadJson, 'test-app-secret');
+        $signature = 'sha256='.hash_hmac('sha256', $payloadJson, 'test-app-secret');
 
         $response = $this->call('POST', '/whatsapp/webhook', [], [], [], [
             'HTTP_X_Hub_Signature_256' => $signature,

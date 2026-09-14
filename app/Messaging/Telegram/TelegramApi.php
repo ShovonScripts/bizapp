@@ -2,6 +2,7 @@
 
 namespace App\Messaging\Telegram;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
@@ -31,7 +32,7 @@ class TelegramApi
     }
 
     /**
-     * @throws \Illuminate\Http\Client\ConnectionException
+     * @throws ConnectionException
      */
     public function call(string $method, array $params = [], ?int $timeout = null): Response
     {

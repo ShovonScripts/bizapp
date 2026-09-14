@@ -13,7 +13,6 @@ use App\Models\StaffMember;
 use App\Services\Calendar\IcsGenerator;
 use App\Support\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Volt\Volt;
@@ -170,7 +169,7 @@ class EmailDriverTest extends TestCase
 
     public function test_ics_generator_produces_rfc5545_vcalendar_output(): void
     {
-        $generator = new IcsGenerator();
+        $generator = new IcsGenerator;
         $ics = $generator->generate($this->appointment);
 
         $this->assertStringContainsString('BEGIN:VCALENDAR', $ics);
@@ -185,7 +184,7 @@ class EmailDriverTest extends TestCase
 
     public function test_ics_generator_produces_google_calendar_url(): void
     {
-        $generator = new IcsGenerator();
+        $generator = new IcsGenerator;
         $url = $generator->googleCalendarUrl($this->appointment);
 
         $this->assertStringContainsString('https://calendar.google.com/calendar/render?', $url);

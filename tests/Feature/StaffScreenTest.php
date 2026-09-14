@@ -23,7 +23,9 @@ class StaffScreenTest extends TestCase
     use RefreshDatabase;
 
     protected Business $salon;
+
     protected Business $gym;
+
     protected User $owner;
 
     protected function setUp(): void

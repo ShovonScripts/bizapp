@@ -4,7 +4,6 @@ namespace App\Messaging\Interactive;
 
 use App\Models\Appointment;
 use App\Models\Customer;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -17,7 +16,9 @@ use Illuminate\Support\Str;
 class AppointmentResponseHandler
 {
     public const INTENT_CONFIRM = 'confirm';
+
     public const INTENT_CANCEL = 'cancel';
+
     public const INTENT_UNKNOWN = 'unknown';
 
     public function handle(Customer $customer, string $messageText): string

@@ -9,9 +9,8 @@ use App\Models\Customer;
 use App\Models\Service;
 use App\Models\StaffMember;
 use App\Models\User;
-use App\Services\Calendar\IcsGenerator;
+use App\Support\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Livewire\Volt\Volt;
 use Tests\TestCase;
 
@@ -20,16 +19,21 @@ class SecurityRegressionTest extends TestCase
     use RefreshDatabase;
 
     private User $owner;
+
     private Business $business;
+
     private Business $otherBusiness;
+
     private Service $service;
+
     private StaffMember $staff;
+
     private Customer $customer;
 
     protected function setUp(): void
     {
         parent::setUp();
-        \App\Support\Tenant::forget();
+        Tenant::forget();
 
         $this->business = Business::factory()->create([
             'name' => 'Main Salon',
@@ -194,7 +198,7 @@ class SecurityRegressionTest extends TestCase
         ];
 
         $payloadJson = json_encode($payload);
-        $signature = 'sha256=' . hash_hmac('sha256', $payloadJson, 'test-app-secret');
+        $signature = 'sha256='.hash_hmac('sha256', $payloadJson, 'test-app-secret');
 
         $response = $this->call('POST', '/whatsapp/webhook', [], [], [], [
             'HTTP_X_Hub_Signature_256' => $signature,
@@ -242,7 +246,7 @@ class SecurityRegressionTest extends TestCase
         ]);
 
         $timestamp = time();
-        $signedPayload = $timestamp . '.' . $payload;
+        $signedPayload = $timestamp.'.'.$payload;
         $signature = hash_hmac('sha256', $signedPayload, 'whsec_test_secret');
         $sigHeader = "t={$timestamp},v1={$signature}";
 
@@ -346,7 +350,7 @@ class SecurityRegressionTest extends TestCase
             ],
         ]);
 
-        $signature = 'sha256=' . hash_hmac('sha256', $payload, 'test-secret');
+        $signature = 'sha256='.hash_hmac('sha256', $payload, 'test-secret');
 
         $response = $this->call('POST', '/whatsapp/webhook', [], [], [], [
             'HTTP_X_Hub_Signature_256' => $signature,

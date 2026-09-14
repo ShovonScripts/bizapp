@@ -30,9 +30,13 @@ class Appointment extends Model
     /* Status values. Kept as constants so a typo is a fatal error, not a silently
        broken query — `status = 'cancelled'` vs `'canceled'` is a classic. */
     public const PENDING = 'pending';
+
     public const CONFIRMED = 'confirmed';
+
     public const COMPLETED = 'completed';
+
     public const CANCELLED = 'cancelled';
+
     public const NO_SHOW = 'no_show';
 
     /** Statuses a reminder should be sent for. Nothing else. */

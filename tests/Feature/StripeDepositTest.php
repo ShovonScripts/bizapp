@@ -13,6 +13,7 @@ use App\Services\Payment\StripePaymentService;
 use App\Support\Tenant;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Livewire\Volt\Volt;
 use Tests\TestCase;
@@ -22,8 +23,11 @@ class StripeDepositTest extends TestCase
     use RefreshDatabase;
 
     private User $owner;
+
     private Business $business;
+
     private Service $service;
+
     private StaffMember $staff;
 
     protected function setUp(): void
@@ -327,7 +331,7 @@ class StripeDepositTest extends TestCase
         $this->assertSame(ChannelConnection::ACTIVE, $connection->status);
 
         /* And the stored secret must still be encrypted at rest. */
-        $raw = (string) \Illuminate\Support\Facades\DB::table('channel_connections')
+        $raw = (string) DB::table('channel_connections')
             ->where('id', $connection->id)
             ->value('credentials');
         $this->assertStringNotContainsString('sk_test_supersecretvalue', $raw);

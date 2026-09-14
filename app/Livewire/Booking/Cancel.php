@@ -3,6 +3,7 @@
 namespace App\Livewire\Booking;
 
 use App\Models\Appointment;
+use App\Models\Business;
 use App\Support\Tenant;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -13,12 +14,17 @@ use Livewire\Component;
 class Cancel extends Component
 {
     public string $slug = '';
+
     public ?int $businessId = null;
+
     public string $token = '';
 
     public ?int $appointmentId = null;
+
     public ?string $customerName = null;
+
     public ?string $serviceName = null;
+
     public ?string $startTime = null;
 
     public bool $confirmed = false;
@@ -28,7 +34,7 @@ class Cancel extends Component
         $this->slug = $slug;
         $this->token = $token;
 
-        $business = \App\Models\Business::where('slug', $slug)->firstOrFail();
+        $business = Business::where('slug', $slug)->firstOrFail();
         $this->businessId = $business->id;
         Tenant::set($business->id);
 
@@ -38,7 +44,7 @@ class Cancel extends Component
             ->with(['service', 'customer'])
             ->first();
 
-        if (! $appointment || $appointment->status === \App\Models\Appointment::CANCELLED) {
+        if (! $appointment || $appointment->status === Appointment::CANCELLED) {
             abort(404);
         }
 
@@ -59,12 +65,12 @@ class Cancel extends Component
             ->where('id', $this->appointmentId)
             ->firstOrFail();
 
-        if ($appointment->status === \App\Models\Appointment::CANCELLED) {
+        if ($appointment->status === Appointment::CANCELLED) {
             abort(404);
         }
 
         $appointment->update([
-            'status' => \App\Models\Appointment::CANCELLED,
+            'status' => Appointment::CANCELLED,
             'cancelled_at' => now(),
         ]);
 

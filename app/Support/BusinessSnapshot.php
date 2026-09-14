@@ -456,8 +456,8 @@ class BusinessSnapshot
                 'revenue' => $revenue,
             ];
         })
-        ->sortByDesc('revenue')
-        ->values();
+            ->sortByDesc('revenue')
+            ->values();
     }
 
     public function performanceMetrics(): array

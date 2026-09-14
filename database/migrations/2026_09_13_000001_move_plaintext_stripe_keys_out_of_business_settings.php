@@ -41,7 +41,7 @@ return new class extends Migration
                 ->exists();
 
             if (! $hasConnection && $secret !== '') {
-                $connection = new ChannelConnection();
+                $connection = new ChannelConnection;
                 $connection->business_id = $row->id;
                 $connection->channel = 'stripe';
                 $connection->status = ChannelConnection::ACTIVE;

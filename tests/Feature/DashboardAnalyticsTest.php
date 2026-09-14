@@ -19,6 +19,7 @@ class DashboardAnalyticsTest extends TestCase
     use RefreshDatabase;
 
     protected Business $business;
+
     protected User $owner;
 
     protected function setUp(): void

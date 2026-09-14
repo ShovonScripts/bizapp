@@ -185,7 +185,7 @@ class SiteSettings
         return [
             [
                 'name' => 'Starter',
-                'price' => $currency . static::get('plan_starter_price', '19'),
+                'price' => $currency.static::get('plan_starter_price', '19'),
                 'raw_price' => (float) static::get('plan_starter_price', 19),
                 'period' => $period,
                 'description' => 'For solo traders getting started.',
@@ -200,7 +200,7 @@ class SiteSettings
             ],
             [
                 'name' => 'Growth',
-                'price' => $currency . static::get('plan_growth_price', '39'),
+                'price' => $currency.static::get('plan_growth_price', '39'),
                 'raw_price' => (float) static::get('plan_growth_price', 39),
                 'period' => $period,
                 'description' => 'For busy salons and expanding teams.',
@@ -216,7 +216,7 @@ class SiteSettings
             ],
             [
                 'name' => 'Business',
-                'price' => $currency . static::get('plan_business_price', '69'),
+                'price' => $currency.static::get('plan_business_price', '69'),
                 'raw_price' => (float) static::get('plan_business_price', 69),
                 'period' => $period,
                 'description' => 'For multi-chair and high-volume shops.',

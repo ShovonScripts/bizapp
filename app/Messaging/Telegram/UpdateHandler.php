@@ -2,6 +2,7 @@
 
 namespace App\Messaging\Telegram;
 
+use App\Messaging\Interactive\AppointmentResponseHandler;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -25,7 +26,7 @@ class UpdateHandler
 {
     /**
      * @param  array  $update  The raw decoded update from Telegram.
-     * @return array{chat_id: int|string, text: string}|null  A reply to send, if any.
+     * @return array{chat_id: int|string, text: string}|null A reply to send, if any.
      */
     public function handle(array $update): ?array
     {
@@ -49,22 +50,22 @@ class UpdateHandler
             ->first();
 
         if ($customer) {
-            $handler = app(\App\Messaging\Interactive\AppointmentResponseHandler::class);
+            $handler = app(AppointmentResponseHandler::class);
             $intent = $handler->detectIntent($text);
 
-            if ($intent !== \App\Messaging\Interactive\AppointmentResponseHandler::INTENT_UNKNOWN) {
+            if ($intent !== AppointmentResponseHandler::INTENT_UNKNOWN) {
                 return $this->reply($chatId, $handler->handle($customer, $text));
             }
 
             return $this->reply(
                 $chatId,
-                "I only send appointment reminders. Reply YES to confirm your booking, CANCEL if you cannot make it, or send /stop to turn them off."
+                'I only send appointment reminders. Reply YES to confirm your booking, CANCEL if you cannot make it, or send /stop to turn them off.'
             );
         }
 
         return $this->reply(
             $chatId,
-            "I only send appointment reminders. Send /stop at any time to turn them off."
+            'I only send appointment reminders. Send /stop at any time to turn them off.'
         );
     }
 
@@ -74,7 +75,7 @@ class UpdateHandler
     protected function start(int|string $chatId, string $token): string
     {
         if ($token === '') {
-            return "Hello! To get your appointment reminders here, please use the personal link your salon sent you.";
+            return 'Hello! To get your appointment reminders here, please use the personal link your salon sent you.';
         }
 
         $customer = Customer::withoutGlobalScope('business')
@@ -107,7 +108,7 @@ class UpdateHandler
                 'customer_id' => $customer->id,
             ]);
 
-            return "That link has already been used. Please ask for your own.";
+            return 'That link has already been used. Please ask for your own.';
         }
 
         $customer->forceFill(['telegram_chat_id' => (string) $chatId])->save();
@@ -136,7 +137,7 @@ class UpdateHandler
         }
 
         return "You're all set — {$name} will send your appointment reminders here. ".
-            "Send /stop at any time to turn them off.";
+            'Send /stop at any time to turn them off.';
     }
 
     /**
@@ -162,7 +163,7 @@ class UpdateHandler
         }
 
         return "Done — you won't get any more messages from me. ".
-            "If you change your mind, just ask your salon to switch them back on.";
+            'If you change your mind, just ask your salon to switch them back on.';
     }
 
     protected function reply(int|string $chatId, string $text): array

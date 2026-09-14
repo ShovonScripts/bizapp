@@ -63,10 +63,10 @@ class MessageQueueCommandTest extends TestCase
         ScheduledMessage::factory()->forCustomer($this->customer())->create();
 
         $this->withoutMockingConsoleOutput();
-        
+
         \Artisan::call('messages:queue');
         $output = \Artisan::output();
-        
+
         $this->assertStringContainsString('Sarah Khan', $output);
         $this->assertStringContainsString('Bright Hair Studio', $output);
     }

@@ -33,10 +33,15 @@ class AppointmentScreenTest extends TestCase
     use RefreshDatabase;
 
     protected Business $salon;
+
     protected Business $gym;
+
     protected User $owner;
+
     protected Customer $customer;
+
     protected Service $service;
+
     protected StaffMember $stylist;
 
     protected function setUp(): void

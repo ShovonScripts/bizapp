@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class StaffMember extends Model
 {
@@ -104,6 +105,7 @@ class StaffMember extends Model
 
         if ($custom && is_array($custom)) {
             $isWorking = $custom['is_working'] ?? $custom['active'] ?? false;
+
             return [
                 'is_working' => (bool) $isWorking,
                 'active' => (bool) $isWorking,
@@ -114,12 +116,13 @@ class StaffMember extends Model
 
         $default = $defaults[$key] ?? ['is_working' => false, 'start' => '09:00', 'end' => '17:00'];
         $default['active'] = $default['is_working'];
+
         return $default;
     }
 
     public function isWorkingOnDate(\DateTimeInterface|string $date): bool
     {
-        $carbonDate = is_string($date) ? \Illuminate\Support\Carbon::parse($date) : \Illuminate\Support\Carbon::instance($date);
+        $carbonDate = is_string($date) ? Carbon::parse($date) : Carbon::instance($date);
         $dayName = strtolower($carbonDate->format('l'));
         $dayConfig = $this->workingHoursFor($dayName);
 
@@ -146,8 +149,8 @@ class StaffMember extends Model
         ?\DateTimeInterface $slotStartUtc = null,
         ?\DateTimeInterface $slotEndUtc = null
     ): bool {
-        $slotStartLocal = \Illuminate\Support\Carbon::instance($slotStartLocal);
-        $slotEndLocal = \Illuminate\Support\Carbon::instance($slotEndLocal);
+        $slotStartLocal = Carbon::instance($slotStartLocal);
+        $slotEndLocal = Carbon::instance($slotEndLocal);
 
         if (! $this->isWorkingOnDate($slotStartLocal)) {
             return false;
@@ -155,8 +158,8 @@ class StaffMember extends Model
 
         $dayConfig = $this->workingHoursFor(strtolower($slotStartLocal->format('l')));
         $tz = $slotStartLocal->getTimezone();
-        $shiftStartLocal = \Illuminate\Support\Carbon::parse($slotStartLocal->toDateString().' '.$dayConfig['start'], $tz);
-        $shiftEndLocal = \Illuminate\Support\Carbon::parse($slotStartLocal->toDateString().' '.$dayConfig['end'], $tz);
+        $shiftStartLocal = Carbon::parse($slotStartLocal->toDateString().' '.$dayConfig['start'], $tz);
+        $shiftEndLocal = Carbon::parse($slotStartLocal->toDateString().' '.$dayConfig['end'], $tz);
 
         if ($slotStartLocal->lt($shiftStartLocal) || $slotEndLocal->gt($shiftEndLocal)) {
             return false;
@@ -179,8 +182,8 @@ class StaffMember extends Model
             $end = $off['end'] ?? $off['end_time'] ?? null;
 
             if (! empty($start) && ! empty($end)) {
-                $offStart = \Illuminate\Support\Carbon::parse($dateString.' '.$start, $tz);
-                $offEnd = \Illuminate\Support\Carbon::parse($dateString.' '.$end, $tz);
+                $offStart = Carbon::parse($dateString.' '.$start, $tz);
+                $offEnd = Carbon::parse($dateString.' '.$end, $tz);
 
                 if ($slotStartLocal->lt($offEnd) && $slotEndLocal->gt($offStart)) {
                     return false;

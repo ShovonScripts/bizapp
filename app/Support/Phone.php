@@ -21,7 +21,7 @@ class Phone
     /**
      * @param  string|null  $number  whatever the user typed
      * @param  string  $defaultCallingCode  digits only, no plus. '44' = UK.
-     * @return string|null  E.164, or null if there was nothing usable
+     * @return string|null E.164, or null if there was nothing usable
      */
     public static function normalise(?string $number, string $defaultCallingCode = '44'): ?string
     {

@@ -7,8 +7,8 @@ use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Service;
 use App\Models\StaffMember;
-use App\Support\Phone;
 use App\Support\Tenant;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Livewire\Volt\Volt;
@@ -188,7 +188,7 @@ class PublicBookingTest extends TestCase
         $staff = StaffMember::factory()->for($business)->create(['active' => true]);
 
         $tomorrow = Carbon::now()->addDay()->toDateString();
-        $slotStart = Carbon::parse($tomorrow . ' 14:00:00', 'Europe/London')->utc();
+        $slotStart = Carbon::parse($tomorrow.' 14:00:00', 'Europe/London')->utc();
         $slotEnd = $slotStart->clone()->addMinutes(30);
 
         // Existing appointment from 14:00 to 14:30
@@ -227,7 +227,7 @@ class PublicBookingTest extends TestCase
 
         // Submitting with service from Business B on Business A's portal should fail
         $tomorrow = Carbon::now()->addDay()->toDateString();
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         Volt::test('booking.public', ['slug' => 'salon-alpha'])
             ->set('selectedServiceId', $serviceB->id)

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,7 +56,7 @@ class User extends Authenticatable
     /** Manual replacement for the global scope — safe to use in controllers/components. */
     public function scopeInCurrentBusiness(Builder $query): Builder
     {
-        return $query->where('business_id', \App\Support\Tenant::id());
+        return $query->where('business_id', Tenant::id());
     }
 
     public function isSuperAdmin(): bool

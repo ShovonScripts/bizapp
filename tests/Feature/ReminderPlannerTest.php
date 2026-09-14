@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\ScheduledMessage;
 use App\Models\Service;
 use App\Support\Tenant;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
@@ -98,7 +99,7 @@ class ReminderPlannerTest extends TestCase
         ], $attributes));
     }
 
-    protected function messages(): \Illuminate\Database\Eloquent\Collection
+    protected function messages(): Collection
     {
         return ScheduledMessage::query()->get();
     }

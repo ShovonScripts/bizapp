@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Messaging\Drivers\WhatsAppCloudApiDriver;
 use App\Messaging\Interactive\AppointmentResponseHandler;
+use App\Models\Business;
 use App\Models\Customer;
+use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -65,22 +67,26 @@ class WhatsAppWebhookController
 
             if (blank($appSecret)) {
                 Log::warning('[whatsapp] Rejected: app secret is not configured.');
+
                 return response('Forbidden', 403);
             }
 
             if (blank($signature)) {
                 Log::warning('[whatsapp] Rejected: missing signature header.');
+
                 return response('Forbidden', 403);
             }
 
-            if (!str_starts_with($signature, 'sha256=')) {
+            if (! str_starts_with($signature, 'sha256=')) {
                 Log::warning('[whatsapp] Rejected: malformed signature header.');
+
                 return response('Forbidden', 403);
             }
 
-            $expected = 'sha256=' . hash_hmac('sha256', $request->getContent(), $appSecret);
-            if (!hash_equals($expected, $signature)) {
+            $expected = 'sha256='.hash_hmac('sha256', $request->getContent(), $appSecret);
+            if (! hash_equals($expected, $signature)) {
                 Log::warning('[whatsapp] Rejected: signature mismatch.');
+
                 return response('Invalid signature', 403);
             }
         }
@@ -132,9 +138,9 @@ class WhatsAppWebhookController
         $business = null;
 
         if ($phoneNumberId !== '') {
-            $business = \App\Models\Business::whereHas('channelConnections', function ($q) use ($phoneNumberId) {
+            $business = Business::whereHas('channelConnections', function ($q) use ($phoneNumberId) {
                 $q->where('channel', 'whatsapp')
-                  ->where('meta->phone_number_id', $phoneNumberId);
+                    ->where('meta->phone_number_id', $phoneNumberId);
             })->first();
         }
 
@@ -143,10 +149,11 @@ class WhatsAppWebhookController
                 'from_ref' => $this->phoneRef($digits),
                 'phone_number_id' => $phoneNumberId,
             ]);
+
             return;
         }
 
-        \App\Support\Tenant::set($business->id);
+        Tenant::set($business->id);
 
         $customer = Customer::where(function ($q) use ($digits) {
             $q->where('whatsapp_number', '+'.$digits)
@@ -160,6 +167,7 @@ class WhatsAppWebhookController
                 'from_ref' => $this->phoneRef($digits),
                 'business_id' => $business->id,
             ]);
+
             return;
         }
 
@@ -169,6 +177,7 @@ class WhatsAppWebhookController
                 'business_id' => $business->id,
                 'customer_business_id' => $customer->business_id,
             ]);
+
             return;
         }
 

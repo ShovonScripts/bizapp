@@ -35,9 +35,9 @@ class IcsGenerator
 
         $summary = $this->escapeText("{$serviceName} at {$businessName}");
         $description = $this->escapeText(
-            "Appointment for {$serviceName} with {$staffName} at {$businessName}." .
-            ($business?->phone ? " Phone: {$business->phone}." : "") .
-            ($appointment->notes ? " Notes: {$appointment->notes}" : "")
+            "Appointment for {$serviceName} with {$staffName} at {$businessName}.".
+            ($business?->phone ? " Phone: {$business->phone}." : '').
+            ($appointment->notes ? " Notes: {$appointment->notes}" : '')
         );
         $escapedLocation = $this->escapeText($location);
 
@@ -82,8 +82,8 @@ class IcsGenerator
         $dtEnd = $appointment->ends_at->clone()->utc()->format('Ymd\THis\Z');
 
         $title = "{$serviceName} at {$businessName}";
-        $details = "Appointment for {$serviceName} with {$staffName} at {$businessName}." .
-            ($business?->phone ? " Phone: {$business->phone}." : "");
+        $details = "Appointment for {$serviceName} with {$staffName} at {$businessName}.".
+            ($business?->phone ? " Phone: {$business->phone}." : '');
 
         return 'https://calendar.google.com/calendar/render?'.http_build_query([
             'action' => 'TEMPLATE',

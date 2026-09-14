@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Business;
+
 /**
  * Resolves "which business are we acting as right now".
  *
@@ -89,7 +91,7 @@ class Tenant
     }
 
     /** Retrieve the current business being operated by the super-admin. */
-    public static function operatingBusiness(): ?\App\Models\Business
+    public static function operatingBusiness(): ?Business
     {
         if (! static::isOperating()) {
             return null;
@@ -97,6 +99,6 @@ class Tenant
 
         $id = static::id();
 
-        return $id ? \App\Models\Business::find($id) : null;
+        return $id ? Business::find($id) : null;
     }
 }

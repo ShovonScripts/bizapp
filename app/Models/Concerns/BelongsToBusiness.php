@@ -28,7 +28,7 @@ trait BelongsToBusiness
 
             if ($businessId !== null) {
                 $builder->where(
-                    $builder->getModel()->getTable() . '.business_id',
+                    $builder->getModel()->getTable().'.business_id',
                     $businessId
                 );
             }

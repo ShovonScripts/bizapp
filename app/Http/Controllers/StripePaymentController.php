@@ -39,7 +39,7 @@ class StripePaymentController extends Controller
                             new AppointmentNotificationMail(
                                 $appointment,
                                 "Deposit Received & Confirmed: {$appointment->service->name}",
-                                "Thank you! We've received your deposit of £".number_format($verification['amount_paid'], 2).". Your appointment has been officially confirmed.",
+                                "Thank you! We've received your deposit of £".number_format($verification['amount_paid'], 2).'. Your appointment has been officially confirmed.',
                                 true
                             )
                         );
@@ -81,6 +81,7 @@ class StripePaymentController extends Controller
 
         if (blank($webhookSecret) || blank($sigHeader)) {
             Log::warning('[StripeWebhook] Rejected: missing webhook secret or signature header.');
+
             return response('Forbidden', 403);
         }
 
@@ -96,10 +97,11 @@ class StripePaymentController extends Controller
 
         if (blank($timestamp) || abs(time() - (int) $timestamp) > 300) {
             Log::warning('[StripeWebhook] Rejected: timestamp outside tolerance.');
+
             return response('Invalid timestamp', 403);
         }
 
-        $signedPayload = $timestamp . '.' . $payload;
+        $signedPayload = $timestamp.'.'.$payload;
         $expectedSignature = hash_hmac('sha256', $signedPayload, $webhookSecret);
 
         $v1Signature = null;
@@ -110,8 +112,9 @@ class StripePaymentController extends Controller
             }
         }
 
-        if (blank($v1Signature) || !hash_equals($expectedSignature, $v1Signature)) {
+        if (blank($v1Signature) || ! hash_equals($expectedSignature, $v1Signature)) {
             Log::warning('[StripeWebhook] Rejected: signature mismatch.');
+
             return response('Invalid signature', 403);
         }
 

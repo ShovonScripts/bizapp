@@ -46,6 +46,9 @@ jobs:
       - name: Run test suite
         run: php artisan test
 
+      - name: Code style (Pint)
+        run: ./vendor/bin/pint --test
+
       - name: Design-system guard
         # docs/DESIGN-SYSTEM.md — fails on banned colours, raw controls, arbitrary radii.
         run: bash scripts/check-design.sh

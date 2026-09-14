@@ -157,6 +157,7 @@ class Business extends Model
 
         // Percentage (e.g. 20%)
         $pct = min(100.0, max(0.0, $value));
+
         return round(($price * $pct) / 100, 2);
     }
 

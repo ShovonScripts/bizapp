@@ -27,10 +27,15 @@ class TenantIsolationTest extends TestCase
     use RefreshDatabase;
 
     protected Business $salon;
+
     protected Business $gym;
+
     protected User $salonOwner;
+
     protected User $gymOwner;
+
     protected Customer $salonCustomer;
+
     protected Customer $gymCustomer;
 
     protected function setUp(): void

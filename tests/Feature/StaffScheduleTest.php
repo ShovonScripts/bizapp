@@ -17,8 +17,11 @@ class StaffScheduleTest extends TestCase
     use RefreshDatabase;
 
     private User $owner;
+
     private Business $business;
+
     private Service $service;
+
     private StaffMember $staff;
 
     protected function setUp(): void
@@ -133,8 +136,8 @@ class StaffScheduleTest extends TestCase
 
         $this->assertFalse($this->staff->isWorkingOnDate($wednesdayDate));
 
-        $slotStart = Carbon::parse($wednesdayDate . ' 10:00:00', 'Europe/London');
-        $slotEnd = Carbon::parse($wednesdayDate . ' 11:00:00', 'Europe/London');
+        $slotStart = Carbon::parse($wednesdayDate.' 10:00:00', 'Europe/London');
+        $slotEnd = Carbon::parse($wednesdayDate.' 11:00:00', 'Europe/London');
         $this->assertFalse($this->staff->isAvailableForSlot($slotStart, $slotEnd));
     }
 
@@ -157,18 +160,18 @@ class StaffScheduleTest extends TestCase
         $this->assertTrue($this->staff->isWorkingOnDate($wednesdayDate));
 
         // 10:00 - 11:00 (Before time-off) -> Available
-        $morningStart = Carbon::parse($wednesdayDate . ' 10:00:00', 'Europe/London');
-        $morningEnd = Carbon::parse($wednesdayDate . ' 11:00:00', 'Europe/London');
+        $morningStart = Carbon::parse($wednesdayDate.' 10:00:00', 'Europe/London');
+        $morningEnd = Carbon::parse($wednesdayDate.' 11:00:00', 'Europe/London');
         $this->assertTrue($this->staff->isAvailableForSlot($morningStart, $morningEnd));
 
         // 12:00 - 13:00 (Direct overlap with time-off) -> Blocked
-        $overlapStart = Carbon::parse($wednesdayDate . ' 12:00:00', 'Europe/London');
-        $overlapEnd = Carbon::parse($wednesdayDate . ' 13:00:00', 'Europe/London');
+        $overlapStart = Carbon::parse($wednesdayDate.' 12:00:00', 'Europe/London');
+        $overlapEnd = Carbon::parse($wednesdayDate.' 13:00:00', 'Europe/London');
         $this->assertFalse($this->staff->isAvailableForSlot($overlapStart, $overlapEnd));
 
         // 14:00 - 15:00 (After time-off) -> Available
-        $afternoonStart = Carbon::parse($wednesdayDate . ' 14:00:00', 'Europe/London');
-        $afternoonEnd = Carbon::parse($wednesdayDate . ' 15:00:00', 'Europe/London');
+        $afternoonStart = Carbon::parse($wednesdayDate.' 14:00:00', 'Europe/London');
+        $afternoonEnd = Carbon::parse($wednesdayDate.' 15:00:00', 'Europe/London');
         $this->assertTrue($this->staff->isAvailableForSlot($afternoonStart, $afternoonEnd));
     }
 

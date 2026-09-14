@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Appointment;
 use App\Models\ScheduledMessage;
+use Illuminate\Support\Str;
 
 /**
  * Keeps queued reminders honest when a booking changes underneath them.
@@ -31,7 +32,7 @@ class AppointmentObserver
     public function creating(Appointment $appointment): void
     {
         if (blank($appointment->cancellation_token)) {
-            $appointment->cancellation_token = \Illuminate\Support\Str::random(64);
+            $appointment->cancellation_token = Str::random(64);
         }
     }
 

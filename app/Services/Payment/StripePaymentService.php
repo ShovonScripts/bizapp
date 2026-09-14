@@ -25,9 +25,9 @@ class StripePaymentService
 
         // Fallback/Simulated test checkout if Stripe secret is not configured or in sandbox test mode
         if (blank($secretKey) || str_starts_with($secretKey, 'mock_') || $config['test_mode'] && blank(config('services.stripe.secret'))) {
-            $mockSessionId = 'cs_test_' . uniqid() . '_' . $appointment->id;
+            $mockSessionId = 'cs_test_'.uniqid().'_'.$appointment->id;
             // Provide a direct callback URL that automatically hits the success route
-            $simulatedUrl = $successUrl . (str_contains($successUrl, '?') ? '&' : '?') . 'session_id=' . $mockSessionId . '&mock=1';
+            $simulatedUrl = $successUrl.(str_contains($successUrl, '?') ? '&' : '?').'session_id='.$mockSessionId.'&mock=1';
 
             $appointment->update([
                 'stripe_session_id' => $mockSessionId,
@@ -45,7 +45,7 @@ class StripePaymentService
             'payment_method_types' => ['card'],
             'customer_email' => $customer?->email,
             'client_reference_id' => (string) $appointment->id,
-            'success_url' => $successUrl . (str_contains($successUrl, '?') ? '&' : '?') . 'session_id={CHECKOUT_SESSION_ID}',
+            'success_url' => $successUrl.(str_contains($successUrl, '?') ? '&' : '?').'session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => $cancelUrl,
             'line_items' => [
                 [

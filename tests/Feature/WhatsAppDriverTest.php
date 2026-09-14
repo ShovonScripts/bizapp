@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Messaging\Drivers\WhatsAppCloudApiDriver;
 use App\Messaging\MessagingManager;
-use App\Messaging\SendResult;
 use App\Models\Business;
 use App\Models\ChannelConnection;
 use App\Models\Customer;
